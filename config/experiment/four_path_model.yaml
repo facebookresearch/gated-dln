@@ -12,6 +12,8 @@ save:
   # setting -1 retains all the models.
   # setting 0 retains no models.
   dir: ${setup.save_dir}
+task:
+  _target_: src.task.${dataloader.name}.${experiment.name}.get_tasks
 task_one:
   name: odd_even
   transform: default # support values: "default", "invert"

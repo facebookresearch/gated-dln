@@ -89,29 +89,18 @@ class Experiment(base_experiment.Experiment):
                 target_transform=None,
             )
 
-            task_one_cfg = self.cfg.experiment.task_one
-
-            task_one = Task(
-                name=task_one_cfg.name,
-                transform=get_transform(task_one_cfg.transform),
-                target_transform=get_target_transform(task_one_cfg.name),
+            tasks = hydra.utils.instantiate(
+                self.cfg.experiment.task,
+                task_one_cfg=self.cfg.experiment.task_one,
+                task_two_cfg=self.cfg.experiment.task_two,
             )
 
-            task_two_cfg = self.cfg.experiment.task_two
-
-            task_two = Task(
-                name=task_two_cfg.name,
-                transform=get_transform(task_two_cfg.transform),
-                target_transform=get_target_transform(task_two_cfg.name),
-            )
-            in_features = 28 ** 2
-            out_features = 2
             self.model = instantiate_using_config(
                 self.cfg.model,
-                task_one=task_one,
-                task_two=task_two,
-                in_features=in_features,
-                out_features=out_features,
+                task_one=tasks.task_one,
+                task_two=tasks.task_two,
+                in_features=tasks.in_features,
+                out_features=tasks.out_features,
             ).to(self.device)
 
             assert isinstance(self.model, BaseModel)

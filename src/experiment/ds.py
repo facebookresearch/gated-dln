@@ -42,3 +42,11 @@ class Task:
     name: str
     transform: Callable[[torch.Tensor], torch.Tensor]
     target_transform: Callable[[torch.Tensor], torch.Tensor]
+
+
+@dataclass
+class TasksForFourPathModel:
+    task_one: Task
+    task_two: Task
+    in_features: int
+    out_features: int
