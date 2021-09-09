@@ -1,0 +1,7 @@
+name: deep_linear_network
+_target_: src.model.${model.name}.Model
+_convert_: none
+model_cfg:
+  num_layers: 1
+  hidden_size: 512
+  dataset_name: ${dataloader.name}

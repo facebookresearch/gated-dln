@@ -1,0 +1,3 @@
+_target_: torch.nn.BCEWithLogitsLoss
+_convert_: all
+neg_class_weight: 1.0

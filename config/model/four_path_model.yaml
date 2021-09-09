@@ -1,0 +1,15 @@
+name: four_path_model
+_target_: src.model.four_path_model.Model
+num_layers: 1
+encoder_cfg:
+  should_share: False
+hidden_layer_cfg:
+  should_share: True # must be set to true
+  dim: 512
+decoder_cfg:
+  should_share: False # must be set to false.
+should_use_non_linearity: False
+weight_init:
+  should_do: False
+  gain: 1.0
+  bias: 0.1

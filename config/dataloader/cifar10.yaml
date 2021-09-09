@@ -1,0 +1,34 @@
+name: cifar10
+_target_: src.dataset.cifar10.dataloader.build_dataloaders
+_recursive_: False
+train_config:
+  dataset:
+    _target_: torchvision.datasets.CIFAR10
+    _convert_: all
+    root: ${setup.base_path}/data/cifar10
+    train: True
+    download: True
+  dataloader:
+    batch_size: 128
+    shuffle: True
+    num_workers: 6
+    pin_memory: True
+  model:
+    name: resnet20
+    should_use_pretrained: True
+    path_to_load: /private/home/sodhani/projects/dln/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt
+test_config:
+  dataset:
+    _target_: torchvision.datasets.CIFAR10
+    _convert_: all
+    root: ${setup.base_path}/data/cifar10
+    train: False
+  dataloader:
+    batch_size: 256
+    shuffle: False
+    num_workers: 6
+    pin_memory: True
+  model:
+    name: resnet20
+    should_use_pretrained: True
+    path_to_load: /private/home/sodhani/projects/dln/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt

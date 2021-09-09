@@ -1,0 +1,14 @@
+name: base
+builder:
+  _target_: src.experiment.${experiment.name}.Experiment
+  _convert_: all
+should_resume: True
+num_epochs: 200
+save:
+  frequency: 2000 # in terms of epoch updates
+  # setting -1 means do not save
+  retain_last_n: 1
+  # setting a natural number (say 5) retains the last n (say 5) models.
+  # setting -1 retains all the models.
+  # setting 0 retains no models.
+  dir: ${setup.save_dir}
