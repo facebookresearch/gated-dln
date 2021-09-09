@@ -13,6 +13,7 @@ class ResNetModel(torch.nn.Module):
             raise NotImplementedError(f"name = {name} is not supported.")
         if should_use_pretrained:
             self.resnet_model.load_state_dict(torch.load(path_to_load))
+            print(f"Using a pretrained model from {path_to_load}")
         for param in self.resnet_model.parameters():
             param.requires_grad = False
 

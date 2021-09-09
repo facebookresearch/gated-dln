@@ -13,44 +13,10 @@ from xplogger.logbook import LogBook
 from xplogger.types import LogType
 
 from src.experiment import base as base_experiment
-from src.experiment.ds import ExperimentMetadata, ExperimentMode, Task
+from src.experiment.ds import ExperimentMetadata, ExperimentMode
 from src.model.base import Model as BaseModel
 from src.utils.config import instantiate_using_config
 from src.utils.types import OptimizerType
-
-
-def get_transform(mode):
-    if mode == "invert":
-
-        def transform(x):
-            return 1 - x
-
-    elif mode == "default":
-
-        def transform(x):
-            return x
-
-    else:
-        raise ValueError(f"mode={mode} is not defined.")
-
-    return transform
-
-
-def get_target_transform(name: str):
-    if name == "odd_even":
-
-        def transform(y):
-            return (y % 2 == 0).long()
-
-    elif name == "greater_than_four":
-
-        def transform(y):
-            return (y > 4).long()
-
-    else:
-        raise ValueError(f"name={name} is not defined.")
-
-    return transform
 
 
 class Experiment(base_experiment.Experiment):
@@ -80,14 +46,19 @@ class Experiment(base_experiment.Experiment):
         if should_init:
 
             transform = transforms.ToTensor()
+            if self.should_use_task_specific_dataloaders:
+                self.dataloaders: dict[
+                    str, dict[str, torch.utils.data.DataLoader]
+                ] = hydra.utils.instantiate(self.cfg.dataloader, target_transform=None)
 
-            self.dataloaders: dict[
-                str, torch.utils.data.DataLoader
-            ] = hydra.utils.instantiate(
-                self.cfg.dataloader,
-                transform=transform,
-                target_transform=None,
-            )
+            else:
+                self.dataloaders: dict[
+                    str, torch.utils.data.DataLoader
+                ] = hydra.utils.instantiate(
+                    self.cfg.dataloader,
+                    transform=transform,
+                    target_transform=None,
+                )
 
             tasks = hydra.utils.instantiate(
                 self.cfg.experiment.task,
@@ -133,7 +104,10 @@ class Experiment(base_experiment.Experiment):
             aggregated_loss.backward()  # type: ignore[union-attr]
             # error: Item "float" of "Union[Any, float]" has no attribute "backward"
             self.optimizer.step()
-        total = targets.size(0)
+        if self.should_use_task_specific_dataloaders:
+            total = targets[0].size(0)
+        else:
+            total = targets.size(0)
 
         current_metric = {
             "batch_index": batch_idx,

@@ -1,15 +1,38 @@
 from __future__ import annotations
 
+from typing import OrderedDict
+
 import hydra
 import torch
 from omegaconf import DictConfig
 from torchvision import transforms as transforms
 
-from src.dataset.cifar10.feature_extractor import (
+from src.data.cifar10.feature_extractor import (
     ResNetModel as ResNetModelForFeatureExtraction,
 )
-from src.dataset.cifar10.utils import normalize
+from src.data.cifar10.utils import normalize
 from src.utils.config import to_dict
+
+
+def build_task_specific_dataloaders(
+    name: str,
+    task_specific_cfgs,
+    target_transform=None,
+) -> dict[str, dict[str, torch.utils.data.DataLoader]]:
+
+    dataloaders = OrderedDict(
+        {
+            mode: build_dataloaders(
+                name=name, target_transform=target_transform, **task_specific_cfgs[mode]
+            )
+            for mode in task_specific_cfgs
+        }
+    )
+    dataloaders_to_return = {
+        mode: [x[mode] for x in dataloaders.values()]
+        for mode in list(dataloaders.values())[0]
+    }
+    return dataloaders_to_return
 
 
 def build_dataloaders(

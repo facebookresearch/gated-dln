@@ -1,5 +1,5 @@
 name: cifar10
-_target_: src.dataset.cifar10.dataloader.build_dataloaders
+_target_: src.data.cifar10.dataloader.build_dataloaders
 _recursive_: False
 train_config:
   dataset:
@@ -16,7 +16,7 @@ train_config:
   model:
     name: resnet20
     should_use_pretrained: True
-    path_to_load: /private/home/sodhani/projects/dln/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt
+    path_to_load: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt
 test_config:
   dataset:
     _target_: torchvision.datasets.CIFAR10
@@ -31,4 +31,4 @@ test_config:
   model:
     name: resnet20
     should_use_pretrained: True
-    path_to_load: /private/home/sodhani/projects/dln/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt
+    path_to_load: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt

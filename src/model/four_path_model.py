@@ -5,6 +5,7 @@ import torch
 import torch.utils.data
 from torch import nn
 
+from src.data.batch_list import BatchList
 from src.experiment.ds import ExperimentMetadata, Task
 from src.model import utils as model_utils
 from src.model.base import Model as BaseModel
@@ -30,12 +31,34 @@ class Model(BaseModel):
         # error: Argument "model_cfg" to "__init__" of "Model" has incompatible type "None"; expected "DictConfig"
 
         self.task_one_name = task_one.name
-        self.task_one_transform = task_one.transform
-        self.task_one_target_transform = task_one.target_transform
 
         self.task_two_name = task_two.name
-        self.task_two_transform = task_two.transform
-        self.task_two_target_transform = task_two.target_transform
+        self.should_use_two_batches = True
+
+        if self.should_use_two_batches:
+
+            def new_task_one_transform(x: BatchList):
+                return task_one.transform(x[0])
+
+            def new_task_two_transform(x: BatchList):
+                return task_two.transform(x[1])
+
+            def new_task_one_target_transform(x: BatchList):
+                return task_one.target_transform(x[0])
+
+            def new_task_two_target_transform(x: BatchList):
+                return task_two.target_transform(x[1])
+
+            self.task_one_transform = new_task_one_transform
+            self.task_two_transform = new_task_two_transform
+            self.task_one_target_transform = new_task_one_target_transform
+            self.task_two_target_transform = new_task_two_target_transform
+
+        else:
+            self.task_one_transform = task_one.transform
+            self.task_one_target_transform = task_one.target_transform
+            self.task_two_transform = task_two.transform
+            self.task_two_target_transform = task_two.target_transform
 
         hidden_size = hidden_layer_cfg["dim"]
 

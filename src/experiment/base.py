@@ -13,6 +13,7 @@ from xplogger import metrics as ml_metrics
 from xplogger.logbook import LogBook
 from xplogger.types import LogType
 
+from src.data.batch_list import BatchList
 from src.experiment import checkpointable as checkpointable_experiment
 from src.experiment.ds import ExperimentMetadata, ExperimentMode, TrainState
 from src.model.base import Model as BaseModel
@@ -38,6 +39,17 @@ class Experiment(checkpointable_experiment.Experiment):
             experiment_id (str, optional): Defaults to "0".
         """
         super().__init__(cfg=cfg, logbook=logbook, experiment_id=experiment_id)
+
+        if cfg.dataloader._target_.endswith("build_task_specific_dataloaders"):
+            self.should_use_task_specific_dataloaders = True
+        else:
+            self.should_use_task_specific_dataloaders = False
+        if self.should_use_task_specific_dataloaders:
+            self.train = self.train_using_two_dataloaders
+            self.test = self.test_using_two_dataloaders
+        else:
+            self.train = self.train_using_one_dataloader
+            self.test = self.test_using_one_dataloader
         if should_init:
             self.dataloaders: dict[
                 str, torch.utils.data.DataLoader
@@ -92,7 +104,7 @@ class Experiment(checkpointable_experiment.Experiment):
             #     self.scheduler.step()  # type: ignore
             self.periodic_save(step=self.train_state.step)
 
-    def train(self) -> None:
+    def train_using_one_dataloader(self) -> None:
         epoch_start_time = time()
         self.model.train()
         mode = "train"
@@ -110,7 +122,27 @@ class Experiment(checkpointable_experiment.Experiment):
         metric_dict["time_taken"] = time() - epoch_start_time
         self.logbook.write_metric(metric=metric_dict)
 
-    def test(self) -> None:
+    def train_using_two_dataloaders(self) -> None:
+        epoch_start_time = time()
+        self.model.train()
+        mode = "train"
+        metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
+        dataloader1_iter = iter(self.dataloaders[mode][0])
+        for batch2 in self.dataloaders[mode][1]:  # noqa: B007
+            batch1 = next(dataloader1_iter)
+            current_metric = self.compute_metrics_for_batch(
+                batch=[BatchList([batch1[i], batch2[i]]) for i in range(len(batch1))],
+                mode=mode,
+                batch_idx=self.train_state.batch,
+            )
+            self.train_state.step += 1
+            metric_dict.update(metrics_dict=current_metric)
+        metric_dict = metric_dict.to_dict()
+        metric_dict.pop("batch_index")
+        metric_dict["time_taken"] = time() - epoch_start_time
+        self.logbook.write_metric(metric=metric_dict)
+
+    def test_using_one_dataloader(self) -> None:
         epoch_start_time = time()
         self.model.eval()
         mode = "test"
@@ -120,6 +152,30 @@ class Experiment(checkpointable_experiment.Experiment):
             for batch_idx, batch in enumerate(testloader):  # noqa: B007
                 current_metric = self.compute_metrics_for_batch(
                     batch=batch, mode=mode, batch_idx=batch_idx
+                )
+                metric_dict.update(metrics_dict=current_metric)
+        metric_dict = metric_dict.to_dict()
+        metric_dict.pop("batch_index")
+        metric_dict["time_taken"] = time() - epoch_start_time
+        self.logbook.write_metric(metric=metric_dict)
+
+    def test_using_two_dataloaders(self) -> None:
+        epoch_start_time = time()
+        self.model.eval()
+        mode = "test"
+        metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
+
+        testloader1_iter = iter(self.dataloaders[mode][0])
+        testloader2 = self.dataloaders[mode][1]
+        with torch.no_grad():
+            for batch_idx, batch2 in enumerate(testloader2):  # noqa: B007
+                batch1 = next(testloader1_iter)
+                current_metric = self.compute_metrics_for_batch(
+                    batch=[
+                        BatchList([batch1[i], batch2[i]]) for i in range(len(batch1))
+                    ],
+                    mode=mode,
+                    batch_idx=batch_idx,
                 )
                 metric_dict.update(metrics_dict=current_metric)
         metric_dict = metric_dict.to_dict()
