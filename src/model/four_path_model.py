@@ -25,6 +25,7 @@ class Model(BaseModel):
         decoder_cfg: dict,
         should_use_non_linearity: bool,
         weight_init: dict,
+        should_use_two_batches: bool,
         description: str = "Four path model. We train three paths and evaluate on the fourth path.",
     ):
         super().__init__(name=name, model_cfg=None, description=description)  # type: ignore[arg-type]
@@ -33,7 +34,7 @@ class Model(BaseModel):
         self.task_one_name = task_one.name
 
         self.task_two_name = task_two.name
-        self.should_use_two_batches = True
+        self.should_use_two_batches = should_use_two_batches
 
         if self.should_use_two_batches:
 

@@ -73,6 +73,7 @@ class Experiment(base_experiment.Experiment):
                 task_two=tasks.task_two,
                 in_features=tasks.in_features,
                 out_features=tasks.out_features,
+                should_use_two_batches=self.should_use_task_specific_dataloaders,
             ).to(self.device)
 
             assert isinstance(self.model, BaseModel)
