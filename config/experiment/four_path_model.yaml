@@ -16,7 +16,9 @@ task:
   _target_: src.task.${dataloader.name}.${experiment.name}.get_tasks
 task_one:
   name: odd_even
+  # name: living_or_not for cifar_v1
   transform: default # support values: "default", "invert"
 task_two:
   name: greater_than_four
+  # name: fly_or_not for cifar_v1
   transform: default # support values: "default", "invert"

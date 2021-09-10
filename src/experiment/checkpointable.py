@@ -46,6 +46,10 @@ class Experiment:
         if self.cfg.model.name == "four_path_model":
             assert not self.cfg.model.decoder_cfg.should_share
             assert self.cfg.model.hidden_layer_cfg.should_share
+        if self.cfg.dataloader.name == "cifar10_v1":
+            assert self.cfg.experiment.task_one.name == "living_or_not"
+            assert self.cfg.experiment.task_two.name == "fly_or_not"
+
         # if (
         #     "model" not in self.cfg
         #     or "name" in self.cfg.model

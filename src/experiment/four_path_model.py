@@ -47,6 +47,7 @@ class Experiment(base_experiment.Experiment):
 
             transform = transforms.ToTensor()
             if self.should_use_task_specific_dataloaders:
+
                 self.dataloaders: dict[
                     str, dict[str, torch.utils.data.DataLoader]
                 ] = hydra.utils.instantiate(self.cfg.dataloader, target_transform=None)
@@ -108,7 +109,6 @@ class Experiment(base_experiment.Experiment):
             total = targets[0].size(0)
         else:
             total = targets.size(0)
-
         current_metric = {
             "batch_index": batch_idx,
             "epoch": self.train_state.epoch,
@@ -119,7 +119,6 @@ class Experiment(base_experiment.Experiment):
         for key in num_correct:
             current_metric[f"loss_{key}"] = (loss[key].item(), total)
             current_metric[f"accuracy_{key}"] = (num_correct[key] / total, total)
-        # breakpoint()
         if self.should_write_batch_logs:
             metric_to_write = {}
             for key, value in current_metric.items():

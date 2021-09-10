@@ -1,12 +1,12 @@
 #airplane, automobile, bird, cat
-name: cifar10
-_target_: src.data.cifar10.dataloader.build_task_specific_dataloaders
+name: cifar10_v1
+_target_: src.data.${dataloader.name}.dataloader.build_task_specific_dataloaders
 _recursive_: false
 task_specific_cfgs:
   living_or_not: 
     train_config:
       dataset:
-        _target_: src.data.cifar10.custom.build_cifar10_living_or_not
+        _target_: src.data.${dataloader.name}.custom.build_cifar10_living_or_not
         _convert_: all
         root: ${setup.base_path}/data/cifar10
         train: True
@@ -22,7 +22,7 @@ task_specific_cfgs:
         path_to_load: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt
     test_config:
       dataset:
-        _target_: src.data.cifar10.custom.build_cifar10_living_or_not
+        _target_: src.data.${dataloader.name}.custom.build_cifar10_living_or_not
         _convert_: all
         root: ${setup.base_path}/data/cifar10
         train: False
@@ -39,7 +39,7 @@ task_specific_cfgs:
   fly_or_not: 
     train_config:
       dataset:
-        _target_: src.data.cifar10.custom.build_cifar10_fly_or_not
+        _target_: src.data.${dataloader.name}.custom.build_cifar10_fly_or_not
         _convert_: all
         root: ${setup.base_path}/data/cifar10
         train: True
@@ -55,7 +55,7 @@ task_specific_cfgs:
         path_to_load: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt
     test_config:
       dataset:
-        _target_: src.data.cifar10.custom.build_cifar10_fly_or_not
+        _target_: src.data.${dataloader.name}.custom.build_cifar10_fly_or_not
         _convert_: all
         root: ${setup.base_path}/data/cifar10
         train: False

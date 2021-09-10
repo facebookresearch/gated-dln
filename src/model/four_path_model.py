@@ -43,22 +43,22 @@ class Model(BaseModel):
             def new_task_two_transform(x: BatchList):
                 return task_two.transform(x[1])
 
-            def new_task_one_target_transform(x: BatchList):
-                return task_one.target_transform(x[0])
+            # def new_task_one_target_transform(x: BatchList):
+            #     return task_one.target_transform(x[0])
 
-            def new_task_two_target_transform(x: BatchList):
-                return task_two.target_transform(x[1])
+            # def new_task_two_target_transform(x: BatchList):
+            #     return task_two.target_transform(x[1])
 
             self.task_one_transform = new_task_one_transform
             self.task_two_transform = new_task_two_transform
-            self.task_one_target_transform = new_task_one_target_transform
-            self.task_two_target_transform = new_task_two_target_transform
+            # self.task_one_target_transform = new_task_one_target_transform
+            # self.task_two_target_transform = new_task_two_target_transform
 
         else:
             self.task_one_transform = task_one.transform
-            self.task_one_target_transform = task_one.target_transform
             self.task_two_transform = task_two.transform
-            self.task_two_target_transform = task_two.target_transform
+        self.task_one_target_transform = task_one.target_transform
+        self.task_two_target_transform = task_two.target_transform
 
         hidden_size = hidden_layer_cfg["dim"]
 
@@ -142,27 +142,38 @@ class Model(BaseModel):
     def forward(
         self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
     ) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor], dict[str, int]]:
-
         output = {
             "task_one": self.task_one_model(self.task_one_transform(x)),
             "task_two": self.task_two_model(self.task_two_transform(x)),
         }
-        target = {
-            "task_one": self.task_one_target_transform(y),
-            "task_two": self.task_two_target_transform(y),
-        }
+        if self.should_use_two_batches:
+            target = {
+                "task_one": self.task_one_target_transform(y[0]),
+                "task_two": self.task_two_target_transform(y[1]),
+            }
+        else:
+            target = {
+                "task_one": self.task_one_target_transform(y),
+                "task_two": self.task_two_target_transform(y),
+            }
         if self.should_share_hidden_layer:
             key = "task_two_encoder_task_one_decoder"
             output[key] = self.task_two_encoder_task_one_decoder(
                 self.task_two_transform(x)
             )
-            target[key] = target["task_one"]
+            if self.should_use_two_batches:
+                target[key] = self.task_one_target_transform(y[1])
+            else:
+                target[key] = target["task_one"]
 
             key = "task_one_encoder_task_two_decoder"
             output[key] = self.task_one_encoder_task_two_decoder(
                 self.task_one_transform(x)
             )
-            target[key] = target["task_two"]
+            if self.should_use_two_batches:
+                target[key] = self.task_two_target_transform(y[0])
+            else:
+                target[key] = target["task_two"]
 
         loss = {key: self.loss_fn(output[key], target[key]) for key in output}
         for key in loss:
@@ -171,7 +182,8 @@ class Model(BaseModel):
                 or key == "task_two_encoder_task_one_decoder"
             ):
                 loss[key] = loss[key].detach()
-
+            elif key == "task_one_encoder_task_two_decoder":
+                loss[key] = loss[key]
         num_correct = {
             key: output[key].max(1)[1].eq(target[key]).sum().item() for key in output
         }
