@@ -17,7 +17,7 @@ hydra:
     dir: outputs/${setup.id}/${now:%Y-%m-%d_%H-%M-%S}
 
   launcher:
-    timeout_min: 35
+    timeout_min: 59
     cpus_per_task: 10
     gpus_per_node: 1
     tasks_per_node: 1

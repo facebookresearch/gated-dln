@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 from copy import deepcopy
 from typing import Any, cast
 
@@ -125,6 +126,23 @@ def read_config_from_file(config_path: str) -> DictConfig:
         DictConfig:
     """
     config = OmegaConf.load(config_path)
+    assert isinstance(config, DictConfig)
+    return set_struct(make_config_immutable(config))
+
+
+def read_config_from_file_for_resuming(config_path: str) -> DictConfig:
+    """Read the config from filesystem.
+
+    Args:
+        config_path (str): path to read config from.
+
+    Returns:
+        DictConfig:
+    """
+    with open(config_path) as f:
+        for line in f:
+            config = OmegaConf.create(json.loads(line))
+            break
     assert isinstance(config, DictConfig)
     return set_struct(make_config_immutable(config))
 

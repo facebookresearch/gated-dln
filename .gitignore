@@ -138,6 +138,7 @@ dmypy.json
 cython_debug/
 
 data/
+!src/data/
 logs/
 multirun/
 outputs/

@@ -41,7 +41,6 @@ def get_tasks(task_one_cfg: DictConfig, task_two_cfg: DictConfig):
     )
     in_features = 2048
     out_features = 2
-
     return TasksForFourPathModel(
         task_one=task_one,
         task_two=task_two,

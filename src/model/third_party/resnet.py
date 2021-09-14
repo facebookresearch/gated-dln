@@ -175,6 +175,10 @@ def resnet110():
     return ResNet(BasicBlock, [18, 18, 18])
 
 
+def resnet110_for_feature_extraction():
+    return ResNet(BasicBlock, [18, 18, 18], should_use_for_feature_extraction=True)
+
+
 def resnet1202():
     return ResNet(BasicBlock, [200, 200, 200])
 

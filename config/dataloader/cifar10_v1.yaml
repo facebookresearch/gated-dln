@@ -19,7 +19,7 @@ task_specific_cfgs:
       model:
         name: resnet20
         should_use_pretrained: True
-        path_to_load: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt
+        path_to_load: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/${dataloader.task_specific_cfgs.living_or_not.train_config.model.name}-12fca82f.pt
     test_config:
       dataset:
         _target_: src.data.${dataloader.name}.custom.build_cifar10_living_or_not
@@ -34,7 +34,7 @@ task_specific_cfgs:
       model:
         name: resnet20
         should_use_pretrained: True
-        path_to_load: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt
+        path_to_load: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/${dataloader.task_specific_cfgs.living_or_not.test_config.model.name}-12fca82f.pt
 
   fly_or_not: 
     train_config:
@@ -52,7 +52,7 @@ task_specific_cfgs:
       model:
         name: resnet20
         should_use_pretrained: True
-        path_to_load: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt
+        path_to_load: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/${dataloader.task_specific_cfgs.fly_or_not.train_config.model.name}-12fca82f.pt
     test_config:
       dataset:
         _target_: src.data.${dataloader.name}.custom.build_cifar10_fly_or_not
@@ -67,5 +67,5 @@ task_specific_cfgs:
       model:
         name: resnet20
         should_use_pretrained: True
-        path_to_load: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt
+        path_to_load: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/${dataloader.task_specific_cfgs.fly_or_not.test_config.model.name}-12fca82f.pt
 
