@@ -43,7 +43,7 @@ class Experiment:
         self.metadata: dict[str, ExperimentMetadata]
 
     def validate_cfg(self):
-        if self.cfg.model.name == "four_path_model":
+        if self.cfg.model.name in ["four_path_model", "k_path_model"]:
             assert not self.cfg.model.decoder_cfg.should_share
             assert self.cfg.model.hidden_layer_cfg.should_share
         if self.cfg.dataloader.name == "cifar10_v1":

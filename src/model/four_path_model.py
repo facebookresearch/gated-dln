@@ -81,14 +81,6 @@ class Model(BaseModel):
             should_use_non_linearity=should_use_non_linearity,
         )
 
-        if weight_init["should_do"]:
-            init_weights = model_utils.get_weight_init_fn(
-                gain=weight_init["gain"], bias=weight_init["bias"]
-            )
-            task_one_encoder.apply(init_weights)
-            task_one_hidden_layers.apply(init_weights)
-            task_one_decoder.apply(init_weights)
-
         if encoder_cfg["should_share"]:
             task_two_encoder = task_one_encoder
         else:
@@ -117,6 +109,17 @@ class Model(BaseModel):
                 hidden_size=hidden_size,
                 should_use_non_linearity=should_use_non_linearity,
             )
+
+        if weight_init["should_do"]:
+            init_weights = model_utils.get_weight_init_fn(
+                gain=weight_init["gain"], bias=weight_init["bias"]
+            )
+            task_one_encoder.apply(init_weights)
+            task_one_hidden_layers.apply(init_weights)
+            task_one_decoder.apply(init_weights)
+            task_two_encoder.apply(init_weights)
+            task_two_hidden_layers.apply(init_weights)
+            task_two_decoder.apply(init_weights)
 
         self.task_one_model = model_utils.get_container_model(
             model_list=[task_one_encoder, task_one_hidden_layers, task_one_decoder],
