@@ -52,3 +52,13 @@ class TasksForFourPathModel:
     task_two: Task
     in_features: int
     out_features: int
+
+
+@dataclass
+class TasksForKPathModel:
+    tasks: list[Task]
+    in_features: int
+    out_features: int
+    shape: tuple[int, int]
+    input_transforms: list
+    target_transforms: list

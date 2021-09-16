@@ -16,7 +16,7 @@ def get_weight_init_fn(gain: float, bias: float = 0.01):
                 gain=gain,
             )
             m.bias.data.fill_(bias)
-        elif isinstance(m, (nn.Flatten, nn.ReLU, nn.Sequential)):
+        elif isinstance(m, (nn.Flatten, nn.ReLU, nn.Sequential, nn.ModuleList)):
             pass
         else:
             raise NotImplementedError(f"module = {m} is not supported.")
