@@ -1,0 +1,18 @@
+name: k_path_model
+_target_: src.model.${model.name}.Model
+num_layers: 1
+encoder_cfg:
+  should_share: False
+hidden_layer_cfg:
+  should_share: True # must be set to true
+  dim: 256
+decoder_cfg:
+  should_share: False # must be set to false.
+should_use_non_linearity: False
+weight_init:
+  should_do: True
+  gain: 0.01
+  bias: 0.1
+gate_cfg:
+  mode: one_plus_mod
+  num_classes_in_original_dataset: ${experiment.task.num_classes_in_original_dataset}
