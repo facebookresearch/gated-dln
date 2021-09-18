@@ -4,16 +4,9 @@ from __future__ import annotations
 import torch
 import torch.utils.data
 from omegaconf import DictConfig
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from torch import nn
 
-from src.data.batch_list import BatchList
-from src.experiment.ds import (
-    ExperimentMetadata,
-    ExperimentMode,
-    Task,
-    TasksForKPathModel,
-)
+from src.experiment.ds import ExperimentMetadata, TasksForKPathModel
 from src.model import utils as model_utils
 from src.model.base import Model as BaseModel
 
@@ -93,7 +86,16 @@ class Model(BaseModel):
         self.gate = self.make_gate()
 
     def make_gate(self):
-        assert self.gate_cfg["mode"] == "one_plus_mod" or self.gate_cfg["mode"] == "mod"
+        assert self.gate_cfg["mode"] in [
+            "one_plus_mod",
+            "mod",
+            "two_plus_mod",
+            "three_plus_mod",
+            "fully_connected",
+        ]
+
+        if self.gate_cfg["mode"] == "fully_connected":
+            return torch.ones(*self.tasks.shape, device="cuda", dtype=torch.float32)
 
         input_output_map = []
         if self.gate_cfg["mode"] == "one_plus_mod":
@@ -102,6 +104,18 @@ class Model(BaseModel):
                 input_output_map.append(
                     (i, (i + 1) % self.gate_cfg["num_classes_in_original_dataset"])
                 )
+        if self.gate_cfg["mode"] == "two_plus_mod":
+            for i in range(self.gate_cfg["num_classes_in_original_dataset"]):
+                for k in range(3):
+                    input_output_map.append(
+                        (i, (i + k) % self.gate_cfg["num_classes_in_original_dataset"])
+                    )
+        if self.gate_cfg["mode"] == "three_plus_mod":
+            for i in range(self.gate_cfg["num_classes_in_original_dataset"]):
+                for k in range(4):
+                    input_output_map.append(
+                        (i, (i + k) % self.gate_cfg["num_classes_in_original_dataset"])
+                    )
         elif self.gate_cfg["mode"] == "mod":
             for i in range(self.gate_cfg["num_classes_in_original_dataset"]):
                 input_output_map.append((i, i))
