@@ -86,43 +86,27 @@ class Model(BaseModel):
         self.gate = self.make_gate()
 
     def make_gate(self):
-        assert self.gate_cfg["mode"] in [
-            "one_plus_mod",
-            "mod",
-            "two_plus_mod",
-            "three_plus_mod",
-            "fully_connected",
-        ]
-
         if self.gate_cfg["mode"] == "fully_connected":
-            return torch.ones(*self.tasks.shape, device="cuda", dtype=torch.float32)
+            gate = torch.ones(*self.tasks.shape, device="cuda", dtype=torch.float32)
+            return gate
 
         input_output_map = []
-        if self.gate_cfg["mode"] == "one_plus_mod":
-            for i in range(self.gate_cfg["num_classes_in_original_dataset"]):
-                input_output_map.append((i, i))
-                input_output_map.append(
-                    (i, (i + 1) % self.gate_cfg["num_classes_in_original_dataset"])
-                )
-        if self.gate_cfg["mode"] == "two_plus_mod":
-            for i in range(self.gate_cfg["num_classes_in_original_dataset"]):
-                for k in range(3):
-                    input_output_map.append(
-                        (i, (i + k) % self.gate_cfg["num_classes_in_original_dataset"])
-                    )
-        if self.gate_cfg["mode"] == "three_plus_mod":
-            for i in range(self.gate_cfg["num_classes_in_original_dataset"]):
-                for k in range(4):
-                    input_output_map.append(
-                        (i, (i + k) % self.gate_cfg["num_classes_in_original_dataset"])
-                    )
+        if "_plus_mod" in self.gate_cfg["mode"]:
+            num_cols = int(self.gate_cfg["mode"].split("_plus_mod")[0])
+            num_rows = self.tasks.shape[0]
+            for i in range(num_rows):
+                for j in range(num_cols):
+                    input_output_map.append((i, (i + j) % num_rows))
         elif self.gate_cfg["mode"] == "mod":
             for i in range(self.gate_cfg["num_classes_in_original_dataset"]):
                 input_output_map.append((i, i))
+        else:
+            raise NotImplementedError(f"mode = self.gate_cfg['mode'] is not supported.")
         gate = torch.zeros(*self.tasks.shape, device="cuda", dtype=torch.float32)
         for current_input, current_output in input_output_map:
             gate[current_input][current_output] = 1.0
-
+        print(gate)
+        print(gate.shape)
         return gate
 
     def forward(

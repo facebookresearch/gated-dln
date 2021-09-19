@@ -39,7 +39,10 @@ def get_tasks(mode: str, num_classes_in_original_dataset: int, device: str):
             num_classes_in_original_dataset // 2,
         )
     )
-    k = len(class_combinations)
+    print(class_combinations)
+    k = len(class_combinations) // 2
+    class_combinations = class_combinations[:k]
+    print(class_combinations)
     tasks = []
     input_transforms = []
     target_transforms = []
