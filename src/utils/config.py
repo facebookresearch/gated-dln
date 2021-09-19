@@ -130,6 +130,25 @@ def read_config_from_file(config_path: str) -> DictConfig:
     return set_struct(make_config_immutable(config))
 
 
+def read_json_config_from_file(config_path: str) -> DictConfig:
+    """Read the config from filesystem.
+
+    Args:
+        config_path (str): path to read config from.
+
+    Returns:
+        DictConfig:
+    """
+    try:
+        with open(config_path) as f:
+            config = json.load(f)
+    except:
+        breakpoint()
+    config = OmegaConf.create(config)
+    assert isinstance(config, DictConfig)
+    return set_struct(make_config_immutable(config))
+
+
 def read_config_from_file_for_resuming(config_path: str) -> DictConfig:
     """Read the config from filesystem.
 
