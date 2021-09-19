@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from time import time
+from typing import OrderedDict
 
 import hydra
 import torch
@@ -177,16 +178,41 @@ class Experiment(base_experiment.Experiment):
         self.model.train()
         mode = "train"
         metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
+        buffer = OrderedDict(
+            {
+                "input": torch.empty(0, 1, 28, 28),
+                "target": torch.empty(0, dtype=torch.int64),
+            }
+        )
         for batch in self.dataloaders[mode]:  # noqa: B007
-            for _ in range(1):
+            input, target = batch
+            batch_size = input.shape[0]
+            input = input[target < self.num_classes_in_original_dataset]
+            target = target[target < self.num_classes_in_original_dataset]
+            buffer["input"] = torch.cat([buffer["input"], input], dim=0)
+            buffer["target"] = torch.cat([buffer["target"], target], dim=0)
+            if buffer["input"].shape[0] >= batch_size:
+                batch = [buffer[key][:batch_size] for key in buffer]
+                for key in buffer:
+                    buffer[key] = buffer[key][batch_size:]
                 current_metric = self.compute_metrics_for_batch(
                     batch=batch,
                     mode=mode,
                     batch_idx=self.train_state.batch,
                 )
-            # breakpoint()
-            self.train_state.step += 1
+                metric_dict.update(metrics_dict=current_metric)
+                self.train_state.step += 1
+        if buffer["input"].shape[0] >= batch_size:
+            batch = [buffer[key][:batch_size] for key in buffer]
+            for key in buffer:
+                buffer[key] = buffer[key][batch_size:]
+            current_metric = self.compute_metrics_for_batch(
+                batch=batch,
+                mode=mode,
+                batch_idx=self.train_state.batch,
+            )
             metric_dict.update(metrics_dict=current_metric)
+            self.train_state.step += 1
         metric_dict = metric_dict.to_dict()
         for key in metric_dict:
             if isinstance(metric_dict[key], (torch.Tensor)):
@@ -201,7 +227,7 @@ class Experiment(base_experiment.Experiment):
         mode = "test"
         metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
         testloader = self.dataloaders[mode]
-        with torch.no_grad():
+        with torch.inference_mode():
             for batch_idx, batch in enumerate(testloader):  # noqa: B007
                 current_metric = self.compute_metrics_for_batch(
                     batch=batch, mode=mode, batch_idx=batch_idx
