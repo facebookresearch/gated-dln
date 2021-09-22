@@ -229,10 +229,14 @@ class Experiment(base_experiment.Experiment):
         testloader = self.dataloaders[mode]
         with torch.inference_mode():
             for batch_idx, batch in enumerate(testloader):  # noqa: B007
-                current_metric = self.compute_metrics_for_batch(
-                    batch=batch, mode=mode, batch_idx=batch_idx
-                )
-                metric_dict.update(metrics_dict=current_metric)
+                input, target = batch
+                input = input[target < self.num_classes_in_original_dataset]
+                target = target[target < self.num_classes_in_original_dataset]
+                if len(input) > 0:
+                    current_metric = self.compute_metrics_for_batch(
+                        batch=batch, mode=mode, batch_idx=batch_idx
+                    )
+                    metric_dict.update(metrics_dict=current_metric)
         metric_dict = metric_dict.to_dict()
         for key in metric_dict:
             if isinstance(metric_dict[key], (torch.Tensor)):

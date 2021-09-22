@@ -106,7 +106,7 @@ class Model(BaseModel):
         for current_input, current_output in input_output_map:
             gate[current_input][current_output] = 1.0
         print(gate)
-        print(gate.shape)
+        print(gate.shape, gate.sum().item())
         return gate
 
     def forward(
