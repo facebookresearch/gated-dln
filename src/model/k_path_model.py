@@ -165,19 +165,4 @@ class Model(BaseModel):
             .view(batch_size, self.tasks.shape[0], self.tasks.shape[1])
             .sum(dim=0)
         )
-        # breakpoint()
-        # x = target_tensor.cpu().view(
-        #     batch_size, self.tasks.shape[0], self.tasks.shape[1]
-        # )[:, 0, 0]
-        # y = (
-        #     output_tensor.max(dim=1)[1]
-        #     .cpu()
-        #     .view(batch_size, self.tasks.shape[0], self.tasks.shape[1])[:, 0, 0]
-        # )
-
-        # if metadata.mode == ExperimentMode("test"):
-        #     print(
-        #         f"f1_score: {f1_score(x, y)}, precision: {precision_score(x, y)}, recall: {recall_score(x, y)}, accuracy: {accuracy_score(x, y)}"
-        #     )
-
         return loss.detach(), loss_to_backprop, num_correct
