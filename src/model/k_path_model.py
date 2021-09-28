@@ -90,30 +90,34 @@ class Model(BaseModel):
             gate = torch.ones(*self.tasks.shape, device="cuda", dtype=torch.float32)
             return gate
 
-        input_output_map = []
-        if "_plus_mod" in self.gate_cfg["mode"]:
-            num_cols = int(self.gate_cfg["mode"].split("_plus_mod")[0])
-            num_rows = self.tasks.shape[0]
-            for i in range(num_rows):
-                for j in range(num_cols):
-                    input_output_map.append((i, (i + j) % num_rows))
-        elif "_plus_minus_mod" in self.gate_cfg["mode"]:
-            num_cols = int(self.gate_cfg["mode"].split("_plus_minus_mod")[0])
-            num_rows = self.tasks.shape[0]
-            for i in range(num_rows):
-                for j in range(-1 * ((num_cols - 1) // 2), (num_cols // 2) + 1):
-                    input_output_map.append((i, (i + j + num_rows) % num_rows))
-        elif self.gate_cfg["mode"] == "mod":
-            for i in range(self.gate_cfg["num_classes_in_original_dataset"]):
-                input_output_map.append((i, i))
-        else:
-            raise NotImplementedError(f"mode = self.gate_cfg['mode'] is not supported.")
+        input_output_map = self._get_input_output_map(mode=self.gate_cfg["mode"])
         gate = torch.zeros(*self.tasks.shape, device="cuda", dtype=torch.float32)
         for current_input, current_output in input_output_map:
             gate[current_input][current_output] = 1.0
         print(gate)
         print(gate.shape, gate.sum().item())
         return gate
+
+    def _get_input_output_map(self, mode: str) -> list[tuple(int, int)]:
+        input_output_map = []
+        if "_plus_mod" in mode:
+            num_cols = int(mode.split("_plus_mod")[0])
+            num_rows = self.tasks.shape[0]
+            for i in range(num_rows):
+                for j in range(num_cols):
+                    input_output_map.append((i, (i + j) % num_rows))
+        elif "_plus_minus_mod" in mode:
+            num_cols = int(mode.split("_plus_minus_mod")[0])
+            num_rows = self.tasks.shape[0]
+            for i in range(num_rows):
+                for j in range(-1 * ((num_cols - 1) // 2), (num_cols // 2) + 1):
+                    input_output_map.append((i, (i + j + num_rows) % num_rows))
+        elif mode == "mod":
+            for i in range(self.gate_cfg["num_classes_in_original_dataset"]):
+                input_output_map.append((i, i))
+        else:
+            raise NotImplementedError(f"mode = {mode} is not supported.")
+        return input_output_map
 
     def forward(
         self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
