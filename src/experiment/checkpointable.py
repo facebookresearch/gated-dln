@@ -50,21 +50,6 @@ class Experiment:
             assert self.cfg.experiment.task_one.name == "living_or_not"
             assert self.cfg.experiment.task_two.name == "fly_or_not"
 
-        # if (
-        #     "model" not in self.cfg
-        #     or "name" in self.cfg.model
-        #     and self.cfg.model.name == "two_path_model"
-        # ):
-        #     return
-        # for mode in self.cfg.experiment.moe.mask.mode.values():
-        #     if mode.startswith("unique"):
-        #         assert self.cfg.loss._target_ == "torch.nn.BCEWithLogitsLoss"
-        #         assert not self.cfg.model.model_cfg.classifier.should_share
-        #     else:
-        #         assert self.cfg.loss._target_ != "torch.nn.BCEWithLogitsLoss"
-        #         assert self.cfg.model.model_cfg.classifier.should_share
-        # # if self.cfg.
-
     def save(self, step: int) -> None:
         """Method to save the experiment"""
 
