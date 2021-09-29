@@ -46,6 +46,25 @@ def save_random_state(save_dir: str, step: int, logbook: LogBook) -> None:
     logbook.write_message(f"Saved {path_to_save_at}")
 
 
+def save_gate(
+    gate: torch.Tensor,
+    save_dir_path: pathlib.Path,
+    logbook: LogBook,
+) -> None:
+    """Save the model.
+
+    Args:
+        model (nn.Module):
+        name (str):
+        save_dir_path (pathlib.Path): directory to save.
+        step (int): step for tracking the training of the agent.
+        retain_last_n (int): number of models to retain.
+    """
+    path_to_save_at = f"{save_dir_path}/gate.pt"
+    torch.save(gate, path_to_save_at)
+    logbook.write_message(f"Saved {path_to_save_at}")
+
+
 def _save_model_or_optimizer(
     model_or_optimizer: ModelOrOptimizerType,
     name: str,
@@ -266,6 +285,24 @@ def load_metadata(save_dir: str, logbook: LogBook) -> Optional[Dict[Any, Any]]:
     else:
         metadata = torch.load(metadata_path)
     return metadata
+
+
+def load_gate(save_dir: str, logbook: LogBook) -> torch.Tensor:
+    """Load the gate.
+
+    Args:
+        save_dir (str): directory to load the model from.
+
+    Returns:
+        Optional[Dict[Any, Any]]: metadata.
+    """
+    gate_path = f"{save_dir}/gate.pt"
+    if not os.path.exists(gate_path):
+        logbook.write_message(f"{gate_path} does not exist.")
+        gate = None
+    else:
+        gate = torch.load(gate_path)
+    return gate
 
 
 def get_random_state(

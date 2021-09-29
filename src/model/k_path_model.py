@@ -1,14 +1,20 @@
 """Class to interface with an Experiment"""
 from __future__ import annotations
 
+import pathlib
+
+import numpy as np
 import torch
 import torch.utils.data
 from omegaconf import DictConfig
 from torch import nn
+from xplogger.logbook import LogBook
 
+from src.checkpoint import utils as checkpoint_utils
 from src.experiment.ds import ExperimentMetadata, TasksForKPathModel
 from src.model import utils as model_utils
 from src.model.base import Model as BaseModel
+from src.utils.config import DictConfig
 
 
 class Model(BaseModel):
@@ -87,13 +93,16 @@ class Model(BaseModel):
 
     def make_gate(self):
         if self.gate_cfg["mode"] == "fully_connected":
-            gate = torch.ones(*self.tasks.shape, device="cuda", dtype=torch.float32)
+            # this value should come from the gate_cfg
+            gate = torch.ones(*self.tasks.shape, device="cpu", dtype=torch.float32)
             return gate
 
         input_output_map = self._get_input_output_map(mode=self.gate_cfg["mode"])
-        gate = torch.zeros(*self.tasks.shape, device="cuda", dtype=torch.float32)
+        gate = torch.zeros(*self.tasks.shape, device="cpu", dtype=torch.float32)
         for current_input, current_output in input_output_map:
             gate[current_input][current_output] = 1.0
+        if self.gate_cfg["mode"].endswith("permute"):
+            gate = gate[:, torch.randperm(gate.shape[1])]
         print(gate)
         print(gate.shape, gate.sum().item())
         return gate
@@ -118,6 +127,10 @@ class Model(BaseModel):
         else:
             raise NotImplementedError(f"mode = {mode} is not supported.")
         return input_output_map
+
+    def to(self, device, *args, **kwargs):
+        self.gate = self.gate.to(device)
+        return super().to(device, *args, **kwargs)
 
     def forward(
         self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
@@ -170,3 +183,27 @@ class Model(BaseModel):
             .sum(dim=0)
         )
         return loss.detach(), loss_to_backprop, num_correct
+
+    def save(
+        self,
+        name: str,
+        save_dir_path: pathlib.Path,
+        step: int,
+        retain_last_n: int,
+        logbook: LogBook,
+    ) -> None:
+        checkpoint_utils.save_gate(
+            gate=self.gate, save_dir_path=save_dir_path, logbook=logbook
+        )
+        return super().save(
+            name=name,
+            save_dir_path=save_dir_path,
+            step=step,
+            retain_last_n=retain_last_n,
+            logbook=logbook,
+        )
+
+    def load(self, name: str, save_dir: str, step: int, logbook: LogBook) -> "Model":
+        self.gate = checkpoint_utils.load_gate(save_dir=save_dir, logbook=logbook)
+        return super().load(name=name, save_dir=save_dir, step=step, logbook=logbook)
+        # mpyp error: Incompatible return value type (got Module, expected "Model")  [return-value]
