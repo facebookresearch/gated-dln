@@ -183,7 +183,7 @@ class Experiment:
             logbook=self.logbook,
         )
 
-    def periodic_save(self, step: int) -> None:
+    def periodic_save(self, train_state: TrainState) -> None:
         """Perioridically save the experiment.
 
         This is a utility method, built on top of the `save` method.
@@ -193,5 +193,5 @@ class Experiment:
             step (int): current step.
         """
         save_frequency = self.cfg.experiment.save.frequency
-        if save_frequency > 0 and step % save_frequency == 0:
-            self.save(step)
+        if save_frequency > 0 and train_state.epoch % save_frequency == 0:
+            self.save(train_state.step)

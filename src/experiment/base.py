@@ -104,9 +104,7 @@ class Experiment(checkpointable_experiment.Experiment):
         for _ in range(start_epoch, start_epoch + self.cfg.experiment.num_epochs):
             self.train()
             self.test()
-            # if self.scheduler:
-            #     self.scheduler.step()  # type: ignore
-            self.periodic_save(step=self.train_state.step)
+            self.periodic_save(train_state=self.train_state)
 
     def train_using_one_dataloader(self) -> None:
         epoch_start_time = time()
