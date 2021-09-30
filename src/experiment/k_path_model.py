@@ -88,19 +88,32 @@ class Experiment(base_experiment.Experiment):
             self._post_init()
 
     def _make_train_state(self, start_step: int) -> None:
+
+        if self.cfg.dataloader.name == "mnist":
+            num_classes = 10
+        else:
+            raise ValueError(
+                f"dataloader_name={self.cfg.dataloader.name} is not supported."
+            )
+
+        scaling_ratio = (
+            self.cfg.experiment.task.num_classes_in_original_dataset / num_classes
+        )
+
         if self.should_use_task_specific_dataloaders:
             train_state = TrainState(
-                num_batches_per_epoch=len(self.dataloaders["train"][0])
-                // self.cfg.experiment.task.num_classes_in_original_dataset,
+                num_batches_per_epoch=int(
+                    len(self.dataloaders["train"][0]) * scaling_ratio
+                ),
                 step=start_step,
             )
         else:
             train_state = TrainState(
-                num_batches_per_epoch=len(self.dataloaders["train"])
-                // self.cfg.experiment.task.num_classes_in_original_dataset,
+                num_batches_per_epoch=int(
+                    len(self.dataloaders["train"]) * scaling_ratio
+                ),
                 step=start_step,
             )
-
         return train_state
 
     def compute_metrics_for_batch(
