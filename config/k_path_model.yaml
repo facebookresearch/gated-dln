@@ -15,17 +15,17 @@ hydra:
     root:
       handlers: []
   run:
-    dir: outputs/${setup.id}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: /private/home/sodhani/projects/abstraction_by_gating/outputs/${setup.id}/${now:%Y-%m-%d_%H-%M-%S}
 
   launcher:
-    timeout_min: 240
+    timeout_min: 600
     cpus_per_task: 10
     gpus_per_node: 1
     tasks_per_node: 1
     mem_gb: 64
     nodes: 1
     # name: ${setup.id}
-    submitit_folder: /private/home/sodhani/projects/dln/logs/submitit/%j
+    submitit_folder: /private/home/sodhani/projects/abstraction_by_gating/logs/submitit/%j
     partition: learnlab # learnlab prioritylab, devlab
     signal_delay_s: 120
     max_num_timeout: 3
