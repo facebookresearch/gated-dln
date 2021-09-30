@@ -91,13 +91,13 @@ class Experiment(base_experiment.Experiment):
         if self.should_use_task_specific_dataloaders:
             train_state = TrainState(
                 num_batches_per_epoch=len(self.dataloaders["train"][0])
-                // self.tasks.shape[0],
+                // self.cfg.experiment.task.num_classes_in_original_dataset,
                 step=start_step,
             )
         else:
             train_state = TrainState(
                 num_batches_per_epoch=len(self.dataloaders["train"])
-                // self.tasks.shape[0],
+                // self.cfg.experiment.task.num_classes_in_original_dataset,
                 step=start_step,
             )
 
