@@ -14,7 +14,7 @@ from xplogger.logbook import LogBook
 from xplogger.types import LogType
 
 from src.experiment import base as base_experiment
-from src.experiment.ds import ExperimentMetadata, ExperimentMode
+from src.experiment.ds import ExperimentMetadata, ExperimentMode, TrainState
 from src.model.base import Model as BaseModel
 from src.utils.config import instantiate_using_config
 from src.utils.types import OptimizerType
@@ -62,7 +62,7 @@ class Experiment(base_experiment.Experiment):
                     target_transform=None,
                 )
 
-            tasks = hydra.utils.instantiate(self.cfg.experiment.task)
+            self.tasks = hydra.utils.instantiate(self.cfg.experiment.task)
 
             self.num_classes_in_original_dataset = (
                 self.cfg.experiment.task.num_classes_in_original_dataset
@@ -70,7 +70,7 @@ class Experiment(base_experiment.Experiment):
 
             self.model = instantiate_using_config(
                 self.cfg.model,
-                tasks=tasks,
+                tasks=self.tasks,
             ).to(self.device)
 
             assert isinstance(self.model, BaseModel)
@@ -86,6 +86,22 @@ class Experiment(base_experiment.Experiment):
             }
 
             self._post_init()
+
+    def _make_train_state(self, start_step: int) -> None:
+        if self.should_use_task_specific_dataloaders:
+            train_state = TrainState(
+                num_batches_per_epoch=len(self.dataloaders["train"][0])
+                // self.tasks.shape[0],
+                step=start_step,
+            )
+        else:
+            train_state = TrainState(
+                num_batches_per_epoch=len(self.dataloaders["train"])
+                // self.tasks.shape[0],
+                step=start_step,
+            )
+
+        return train_state
 
     def compute_metrics_for_batch(
         self,

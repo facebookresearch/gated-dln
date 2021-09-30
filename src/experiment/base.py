@@ -78,17 +78,22 @@ class Experiment(checkpointable_experiment.Experiment):
         if should_resume_experiment:
             start_step = self.load_latest_step()
 
-        if self.should_use_task_specific_dataloaders:
-            self.train_state = TrainState(
-                num_batches_per_epoch=len(self.dataloaders["train"][0]), step=start_step
-            )
-        else:
-            self.train_state = TrainState(
-                num_batches_per_epoch=len(self.dataloaders["train"]), step=start_step
-            )
+        self.train_state = self._make_train_state(start_step=start_step)
 
         self.should_write_batch_logs = self.cfg.logbook.should_write_batch_logs
         self.startup_logs()
+    
+    def _make_train_state(self, start_step: int) -> None:
+        if self.should_use_task_specific_dataloaders:
+            train_state = TrainState(
+                num_batches_per_epoch=len(self.dataloaders["train"][0]), step=start_step
+            )
+        else:
+            train_state = TrainState(
+                num_batches_per_epoch=len(self.dataloaders["train"]), step=start_step
+            )
+
+        return train_state
 
     def startup_logs(self) -> None:
         """Write some logs at the start of the experiment."""
