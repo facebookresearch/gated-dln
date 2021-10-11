@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import pathlib
 
-import numpy as np
 import torch
 import torch.utils.data
 from omegaconf import DictConfig
@@ -13,11 +12,10 @@ from xplogger.logbook import LogBook
 from src.checkpoint import utils as checkpoint_utils
 from src.experiment.ds import ExperimentMetadata, TasksForKPathModel
 from src.model import utils as model_utils
-from src.model.base import Model as BaseModel
-from src.utils.config import DictConfig
+from src.model.base import Model as BaseModelCls
 
 
-class Model(BaseModel):
+class BaseModel(BaseModelCls):
     def __init__(
         self,
         name: str,
@@ -49,7 +47,6 @@ class Model(BaseModel):
                 for _ in range(self.tasks.shape[0])
             ]
         )
-
         self.decoders = nn.ModuleList(
             [
                 model_utils.get_decoder(
@@ -61,27 +58,16 @@ class Model(BaseModel):
                 for _ in range(self.tasks.shape[1])
             ]
         )
-
-        self.hidden_layer = model_utils.get_hidden(
-            num_layers=num_layers,
-            hidden_size=hidden_size,
-            should_use_non_linearity=should_use_non_linearity,
-        )
         if weight_init["should_do"]:
             init_weights = model_utils.get_weight_init_fn(
                 gain=weight_init["gain"], bias=weight_init["bias"]
             )
             self.encoders.apply(init_weights)
             self.decoders.apply(init_weights)
-            self.hidden_layer.apply(init_weights)
-
         self.encoders = torch.jit.script(self.encoders)
         self.decoders = torch.jit.script(self.decoders)
-        self.hidden_layer = torch.jit.script(self.hidden_layer)
 
         assert encoder_cfg["should_share"] is False
-
-        assert hidden_layer_cfg["should_share"] is True
 
         assert decoder_cfg["should_share"] is False
 
@@ -132,6 +118,76 @@ class Model(BaseModel):
         self.gate = self.gate.to(device)
         return super().to(device, *args, **kwargs)
 
+    def save(
+        self,
+        name: str,
+        save_dir_path: pathlib.Path,
+        step: int,
+        retain_last_n: int,
+        logbook: LogBook,
+    ) -> None:
+        checkpoint_utils.save_gate(
+            gate=self.gate, save_dir_path=save_dir_path, logbook=logbook
+        )
+        return super().save(
+            name=name,
+            save_dir_path=save_dir_path,
+            step=step,
+            retain_last_n=retain_last_n,
+            logbook=logbook,
+        )
+
+    def load(self, name: str, save_dir: str, step: int, logbook: LogBook) -> "Model":
+        self.gate = checkpoint_utils.load_gate(save_dir=save_dir, logbook=logbook)
+        return super().load(name=name, save_dir=save_dir, step=step, logbook=logbook)
+        # mpyp error: Incompatible return value type (got Module, expected "Model")  [return-value]
+
+
+class Model(BaseModel):
+    def __init__(
+        self,
+        name: str,
+        tasks: TasksForKPathModel,
+        num_layers: int,
+        encoder_cfg: dict,
+        hidden_layer_cfg: dict,
+        decoder_cfg: dict,
+        should_use_non_linearity: bool,
+        weight_init: dict,
+        gate_cfg: DictConfig,
+        description: str = "k path model. We train O(k) paths and evaluate on O(k**2) paths.",
+    ):
+        super().__init__(
+            name=name,
+            tasks=tasks,
+            num_layers=num_layers,
+            encoder_cfg=encoder_cfg,
+            hidden_layer_cfg=hidden_layer_cfg,
+            decoder_cfg=decoder_cfg,
+            should_use_non_linearity=should_use_non_linearity,
+            weight_init=weight_init,
+            gate_cfg=gate_cfg,
+            description=description,
+        )  # type: ignore[arg-type]
+        # error: Argument "model_cfg" to "__init__" of "Model" has incompatible type "None"; expected "DictConfig"
+
+        hidden_size = hidden_layer_cfg["dim"]
+
+        self.hidden_layer = model_utils.get_hidden(
+            num_layers=num_layers,
+            hidden_size=hidden_size,
+            should_use_non_linearity=should_use_non_linearity,
+        )
+        if weight_init["should_do"]:
+            init_weights = model_utils.get_weight_init_fn(
+                gain=weight_init["gain"], bias=weight_init["bias"]
+            )
+            self.hidden_layer.apply(init_weights)
+
+        self.hidden_layer = torch.jit.script(self.hidden_layer)
+
+        assert hidden_layer_cfg["should_share"] is True
+
     def forward(
         self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -139,7 +195,6 @@ class Model(BaseModel):
         batch_size = x.shape[0]
 
         transformed_x = [transform(x) for transform in self.tasks.input_transforms]
-
         features = [encoder(x) for encoder, x in zip(self.encoders, transformed_x)]
 
         hidden = self.hidden_layer(
@@ -183,27 +238,3 @@ class Model(BaseModel):
             .sum(dim=0)
         )
         return loss.detach(), loss_to_backprop, num_correct
-
-    def save(
-        self,
-        name: str,
-        save_dir_path: pathlib.Path,
-        step: int,
-        retain_last_n: int,
-        logbook: LogBook,
-    ) -> None:
-        checkpoint_utils.save_gate(
-            gate=self.gate, save_dir_path=save_dir_path, logbook=logbook
-        )
-        return super().save(
-            name=name,
-            save_dir_path=save_dir_path,
-            step=step,
-            retain_last_n=retain_last_n,
-            logbook=logbook,
-        )
-
-    def load(self, name: str, save_dir: str, step: int, logbook: LogBook) -> "Model":
-        self.gate = checkpoint_utils.load_gate(save_dir=save_dir, logbook=logbook)
-        return super().load(name=name, save_dir=save_dir, step=step, logbook=logbook)
-        # mpyp error: Incompatible return value type (got Module, expected "Model")  [return-value]

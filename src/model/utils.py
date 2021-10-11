@@ -7,16 +7,21 @@ import torch
 import torch.utils.data
 from torch import nn
 
+from src.model.moe import layer as moe_layer
+
 
 def get_weight_init_fn(gain: float, bias: float = 0.01):
     def init_weights(m):
-        if isinstance(m, nn.Linear):
+        if isinstance(m, (nn.Linear, moe_layer.Linear)):
             torch.nn.init.xavier_uniform_(
                 m.weight,
                 gain=gain,
             )
             m.bias.data.fill_(bias)
-        elif isinstance(m, (nn.Flatten, nn.ReLU, nn.Sequential, nn.ModuleList)):
+        elif isinstance(
+            m,
+            (nn.Flatten, nn.ReLU, nn.Sequential, nn.ModuleList, moe_layer.FeedForward),
+        ):
             pass
         else:
             raise NotImplementedError(f"module = {m} is not supported.")
@@ -35,6 +40,27 @@ def get_encoder(
         if should_use_non_linearity:
             layers.append(nn.ReLU())
         layers.append(nn.Linear(in_features=hidden_size, out_features=hidden_size))
+    return nn.Sequential(*layers)
+
+
+def get_moe_encoder(
+    num_experts: int,
+    num_layers: int,
+    in_features: int,
+    hidden_size: int,
+    should_use_non_linearity: bool,
+):
+    layers = [
+        nn.Flatten(start_dim=2, end_dim=-1),
+        moe_layer.FeedForward(
+            num_experts=num_experts,
+            in_features=in_features,
+            out_features=hidden_size,
+            num_layers=num_layers,
+            should_use_non_linearity=should_use_non_linearity,
+            hidden_features=hidden_size,
+        ),
+    ]
     return nn.Sequential(*layers)
 
 
@@ -62,6 +88,23 @@ def get_decoder(
     ]
 
     return nn.Sequential(*layers)
+
+
+def get_moe_decoder(
+    num_experts: int,
+    num_layers: int,
+    out_features: int,
+    hidden_size: int,
+    should_use_non_linearity: bool,
+):
+    return moe_layer.FeedForward(
+        num_experts=num_experts,
+        in_features=hidden_size,
+        out_features=out_features,
+        num_layers=num_layers,
+        should_use_non_linearity=should_use_non_linearity,
+        hidden_features=hidden_size,
+    )
 
 
 def get_container_model(model_list: list[nn.Module], should_use_non_linearity: bool):

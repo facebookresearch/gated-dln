@@ -85,6 +85,15 @@ class Experiment(base_experiment.Experiment):
                 for mode in self._supported_modes
             }
 
+            if self.cfg.model.hidden_layer_cfg.should_share:
+                self.compute_metrics_for_batch = (
+                    self.compute_metrics_for_batch_when_using_shared_hidden_layer
+                )
+            else:
+                self.compute_metrics_for_batch = (
+                    self.compute_metrics_for_batch_without_share_hidden
+                )
+
             self._post_init()
 
     def _make_train_state(self, start_step: int) -> None:
@@ -116,7 +125,7 @@ class Experiment(base_experiment.Experiment):
             )
         return train_state
 
-    def compute_metrics_for_batch(
+    def compute_metrics_for_batch_when_using_shared_hidden_layer(
         self,
         batch: tuple[torch.Tensor, torch.Tensor],
         mode: str,
@@ -249,6 +258,63 @@ class Experiment(base_experiment.Experiment):
         metric_dict.pop("batch_index")
         metric_dict["time_taken"] = time() - epoch_start_time
         self.logbook.write_metric(metric=metric_dict)
+
+    def compute_metrics_for_batch_without_share_hidden(
+        self,
+        batch: tuple[torch.Tensor, torch.Tensor],
+        mode: str,
+        batch_idx: int,
+    ) -> LogType:
+        start_time = time()
+        should_train = mode == "train"
+        inputs, targets = [_tensor.to(self.device) for _tensor in batch]
+        metadata = self.metadata[mode]
+        inputs = inputs[targets < self.num_classes_in_original_dataset]
+        targets = targets[targets < self.num_classes_in_original_dataset]
+        loss, loss_to_backprop, num_correct = self.model(
+            x=inputs, y=targets, metadata=metadata
+        )
+        if should_train:
+            self.optimizer.zero_grad(set_to_none=True)
+            loss_to_backprop.backward()  # type: ignore[union-attr]
+            # error: Item "float" of "Union[Any, float]" has no attribute "backward"
+            self.optimizer.step()
+        if self.should_use_task_specific_dataloaders:
+            total = targets[0].size(0)
+        else:
+            total = targets.size(0)
+        current_metric = {
+            "batch_index": batch_idx,
+            "epoch": self.train_state.epoch,
+            "step": self.train_state.step,
+            "time_taken": time() - start_time,
+            "mode": mode,
+        }
+
+        average_accuracy_for_selected_paths = num_correct.sum() / total
+        current_metric["average_accuracy_for_selected_paths"] = (
+            average_accuracy_for_selected_paths,
+            total,
+        )
+        average_loss_for_selected_paths = loss
+        current_metric["average_loss_for_selected_paths"] = (
+            average_loss_for_selected_paths,
+            total,
+        )
+
+        if self.should_write_batch_logs:
+            metric_to_write = {}
+            for key, value in current_metric.items():
+                if isinstance(value, (int, float, str)):
+                    metric_to_write[key] = value
+                else:
+                    if isinstance(value[0], (torch.Tensor)):
+                        metric_to_write[key] = value[0].detach().cpu().numpy()
+                    else:
+                        metric_to_write[key] = value[0]
+            self.logbook.write_metric(metric=metric_to_write)
+        current_metric.pop("time_taken")
+        return current_metric
 
     def test_using_one_dataloader(self) -> None:
         epoch_start_time = time()
