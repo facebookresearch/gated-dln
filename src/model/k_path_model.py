@@ -203,11 +203,13 @@ class Model(BaseModel):
         # (batch_size * self.tasks.shape[0], dim)
 
         outputs = [
-            decoder(hidden).reshape(batch_size, self.tasks.shape[0], 2).unsqueeze(2)
+            decoder(hidden)
+            .reshape(batch_size, self.tasks.shape[0], self.tasks.out_features)
+            .unsqueeze(2)
             for decoder in self.decoders
         ]  # list of size self.tasks.shape[1]
         # outputs[0].shape == (batch, self.tasks.shape[0], 1, 2)
-        output_tensor = torch.cat(outputs, dim=2).view(-1, 2)
+        output_tensor = torch.cat(outputs, dim=2).view(-1, self.tasks.out_features)
         # (batch, self.tasks.shape[0], self.tasks.shape[1], 2)
 
         transformed_y = [transform(y) for transform in self.tasks.target_transforms]
