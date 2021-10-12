@@ -10,7 +10,6 @@ def get_in_and_out_features(
     if mode.endswith("permute_target"):
         out_features = num_classes_in_original_dataset
     else:
-        breakpoint()
         out_features = 2
     return (in_features, out_features)
 

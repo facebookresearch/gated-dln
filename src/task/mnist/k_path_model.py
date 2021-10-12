@@ -30,8 +30,11 @@ def get_tasks(mode: str, num_classes_in_original_dataset: int, device: str):
     else:
         raise NotImplementedError(f"mode={mode} is not supported.")
 
-    if mode in ["rotate"] or mode.endswith("rotate_input"):
-        breakpoint()
+    if (
+        mode in ["rotate"]
+        or mode.endswith("rotate_input")
+        or mode.endswith("permute_input")
+    ):
         target_transforms = get_list_of_target_transformations_using_class_combination(
             num_transformations=num_input_transformations,
             num_classes_in_original_dataset=num_classes_in_original_dataset,
