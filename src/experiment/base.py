@@ -197,33 +197,6 @@ class Experiment(checkpointable_experiment.Experiment):
         batch_idx: int,
     ) -> LogType:
         raise NotImplementedError
-        # start_time = time()
-        # should_train = mode == "train"
-        # inputs, targets = [_tensor.to(self.device) for _tensor in batch]
-        # outputs = self.model(inputs)
-        # loss = self.loss_fn(outputs, targets)  # type: ignore [attr-defined]
-        # # error: "Experiment" has no attribute "loss_fn"
-        # if should_train:
-        #     self.optimizer.zero_grad(set_to_none=True)
-        #     loss.backward()
-        #     self.optimizer.step()
-        # _, predicted = outputs.max(1)
-        # num_correct = predicted.eq(targets).sum().item()
-        # total = targets.size(0)
-
-        # current_metric = {
-        #     "loss": loss.item(),
-        #     "accuracy": num_correct * 100.0 / total,
-        #     "batch_index": batch_idx,
-        #     "epoch": self.train_state.epoch,
-        #     "step": self.train_state.step,
-        #     "time_taken": time() - start_time,
-        #     "mode": mode,
-        # }
-        # if self.should_write_batch_logs:
-        #     self.logbook.write_metric(metric=current_metric)
-        # current_metric.pop("time_taken")
-        # return current_metric
 
     def init_metric_dict(self, epoch: int, mode: str) -> ml_metrics.MetricDict:
         metric_dict = ml_metrics.MetricDict(

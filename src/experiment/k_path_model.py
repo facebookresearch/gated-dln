@@ -61,7 +61,6 @@ class Experiment(base_experiment.Experiment):
                     transform=transform,
                     target_transform=None,
                 )
-
             self.tasks = hydra.utils.instantiate(self.cfg.experiment.task)
 
             self.num_classes_in_original_dataset = (
@@ -135,8 +134,6 @@ class Experiment(base_experiment.Experiment):
         should_train = mode == "train"
         inputs, targets = [_tensor.to(self.device) for _tensor in batch]
         metadata = self.metadata[mode]
-        inputs = inputs[targets < self.num_classes_in_original_dataset]
-        targets = targets[targets < self.num_classes_in_original_dataset]
         loss, loss_to_backprop, num_correct = self.model(
             x=inputs, y=targets, metadata=metadata
         )
