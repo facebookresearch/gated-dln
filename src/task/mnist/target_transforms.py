@@ -1,14 +1,8 @@
 from __future__ import annotations
 
 import itertools
-import math
-from typing import Any
 
-import numpy as np
 import torch
-from torchvision.transforms import functional as functional_transforms
-
-from src.task.mnist.utils import get_in_and_out_features
 
 
 def get_target_transform_using_class_combination(
