@@ -255,7 +255,6 @@ class Model(BaseModel):
         output_tensor = self.get_decoder_output(hidden=hidden, batch_size=batch_size)
 
         # (batch, self.tasks.shape[0], self.tasks.shape[1], 2)
-
         transformed_y = [transform(y) for transform in self.tasks.target_transforms]
         # list of size self.tasks.shape[1]
         # transformed_y[0].shape == (batch,)

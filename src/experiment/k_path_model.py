@@ -324,6 +324,7 @@ class Experiment(base_experiment.Experiment):
                 input, target = batch
                 input = input[target < self.num_classes_in_original_dataset]
                 target = target[target < self.num_classes_in_original_dataset]
+                batch = (input, target)
                 if len(input) > 0:
                     current_metric = self.compute_metrics_for_batch(
                         batch=batch, mode=mode, batch_idx=batch_idx
