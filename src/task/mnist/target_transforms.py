@@ -50,7 +50,7 @@ def get_target_transform_using_class_permutation(
     class_permutation: list[int], device: torch.device
 ):
 
-    cache = torch.zeros(10, dtype=torch.long)
+    cache = torch.zeros(len(class_permutation), dtype=torch.long)
     for idx, class_idx in enumerate(class_permutation):
         cache[class_idx] = idx
     cache = cache.to(device)
