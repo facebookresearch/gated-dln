@@ -1,0 +1,5 @@
+black==21.9b0
+hydra-core==1.1.0
+notifiers==1.2.1
+hydra-submitit-launcher==1.1.6
+pymonogo==3.12.1
