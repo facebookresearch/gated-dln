@@ -63,8 +63,8 @@ class Experiment(base_experiment.Experiment):
                 )
             self.tasks = hydra.utils.instantiate(self.cfg.experiment.task)
 
-            self.num_classes_in_original_dataset = (
-                self.cfg.experiment.task.num_classes_in_original_dataset
+            self.num_classes_in_selected_dataset = (
+                self.cfg.experiment.task.num_classes_in_selected_dataset
             )
 
             self.model = instantiate_using_config(
@@ -105,7 +105,7 @@ class Experiment(base_experiment.Experiment):
             )
 
         scaling_ratio = (
-            self.cfg.experiment.task.num_classes_in_original_dataset / num_classes
+            self.cfg.experiment.task.num_classes_in_selected_dataset / num_classes
         )
 
         if self.should_use_task_specific_dataloaders:
@@ -222,8 +222,8 @@ class Experiment(base_experiment.Experiment):
         for batch in self.dataloaders[mode]:  # noqa: B007
             input, target = batch
             batch_size = input.shape[0]
-            input = input[target < self.num_classes_in_original_dataset]
-            target = target[target < self.num_classes_in_original_dataset]
+            input = input[target < self.num_classes_in_selected_dataset]
+            target = target[target < self.num_classes_in_selected_dataset]
             buffer["input"] = torch.cat([buffer["input"], input], dim=0)
             buffer["target"] = torch.cat([buffer["target"], target], dim=0)
             if buffer["input"].shape[0] >= batch_size:
@@ -266,8 +266,8 @@ class Experiment(base_experiment.Experiment):
         should_train = mode == "train"
         inputs, targets = [_tensor.to(self.device) for _tensor in batch]
         metadata = self.metadata[mode]
-        inputs = inputs[targets < self.num_classes_in_original_dataset]
-        targets = targets[targets < self.num_classes_in_original_dataset]
+        inputs = inputs[targets < self.num_classes_in_selected_dataset]
+        targets = targets[targets < self.num_classes_in_selected_dataset]
         loss, loss_to_backprop, num_correct = self.model(
             x=inputs, y=targets, metadata=metadata
         )
@@ -322,8 +322,8 @@ class Experiment(base_experiment.Experiment):
         with torch.inference_mode():
             for batch_idx, batch in enumerate(testloader):  # noqa: B007
                 input, target = batch
-                input = input[target < self.num_classes_in_original_dataset]
-                target = target[target < self.num_classes_in_original_dataset]
+                input = input[target < self.num_classes_in_selected_dataset]
+                target = target[target < self.num_classes_in_selected_dataset]
                 batch = (input, target)
                 if len(input) > 0:
                     current_metric = self.compute_metrics_for_batch(

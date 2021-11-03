@@ -15,8 +15,10 @@ save:
 task:
   _target_: src.task.${dataloader.name}.${experiment.name}.get_tasks
   mode: rotate
-  num_classes_in_original_dataset: 4
+  num_classes_in_selected_dataset: 4
   device: ${setup.device}
+  num_classes_in_full_dataset: 10 # number of classes in the full dataset
+
 # task_one:
 #   name: odd_even
 #   # name: living_or_not for cifar_v1

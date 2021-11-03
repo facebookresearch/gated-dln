@@ -15,4 +15,4 @@ weight_init:
   bias: 0.1
 gate_cfg:
   mode: one_plus_mod
-  num_classes_in_original_dataset: ${experiment.task.num_classes_in_original_dataset}
+  num_classes_in_selected_dataset: ${experiment.task.num_classes_in_selected_dataset}

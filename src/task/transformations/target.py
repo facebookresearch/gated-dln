@@ -24,14 +24,14 @@ def get_target_transform_using_class_combination(
 
 def get_list_of_target_transformations_using_class_combination(
     num_transformations: int,
-    num_classes_in_original_dataset: int,
+    num_classes_in_selected_dataset: int,
     num_classes_in_full_dataset: int,
     device: torch.device,
 ):
     class_combinations = list(
         itertools.combinations(
-            list(range(num_classes_in_original_dataset)),
-            num_classes_in_original_dataset // 2,
+            list(range(num_classes_in_selected_dataset)),
+            num_classes_in_selected_dataset // 2,
         )
     )
     target_transforms = []
@@ -63,12 +63,12 @@ def get_target_transform_using_class_permutation(
 
 
 def get_list_of_target_transformations_using_class_permutation(
-    num_transformations: int, num_classes_in_original_dataset: int, device: torch.device
+    num_transformations: int, num_classes_in_selected_dataset: int, device: torch.device
 ):
     class_permutations = list(
         itertools.permutations(
-            list(range(num_classes_in_original_dataset)),
-            num_classes_in_original_dataset,
+            list(range(num_classes_in_selected_dataset)),
+            num_classes_in_selected_dataset,
         )
     )
     target_transforms = []

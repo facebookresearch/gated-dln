@@ -28,11 +28,11 @@ def get_list_of_rotation_transformations(
 
 
 def get_permutation_transform(
-    mode: str, num_classes_in_original_dataset: int, seed: int, device: torch.device
+    mode: str, num_classes_in_selected_dataset: int, seed: int, device: torch.device
 ):
     rng_permute = np.random.default_rng(seed=seed)
     in_features, _ = get_in_and_out_features(
-        mode=mode, num_classes_in_original_dataset=num_classes_in_original_dataset
+        mode=mode, num_classes_in_selected_dataset=num_classes_in_selected_dataset
     )
     dim = int(math.sqrt(in_features))
     permuted_indices = (
@@ -52,7 +52,7 @@ def get_permutation_transform(
 
 def get_list_of_permutation_transformations(
     mode: str,
-    num_classes_in_original_dataset: int,
+    num_classes_in_selected_dataset: int,
     num_transformations: int,
     device: torch.device,
 ):
@@ -61,7 +61,7 @@ def get_list_of_permutation_transformations(
         transforms.append(
             get_permutation_transform(
                 mode=mode,
-                num_classes_in_original_dataset=num_classes_in_original_dataset,
+                num_classes_in_selected_dataset=num_classes_in_selected_dataset,
                 seed=input_index,
                 device=device,
             )

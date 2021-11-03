@@ -126,7 +126,7 @@ class BaseModel(BaseModelCls):
                 for j in range(-1 * ((num_cols - 1) // 2), (num_cols // 2) + 1):
                     input_output_map.append((i, (i + j + num_rows) % num_rows))
         elif mode == "mod":
-            for i in range(self.gate_cfg["num_classes_in_original_dataset"]):
+            for i in range(self.gate_cfg["num_classes_in_selected_dataset"]):
                 input_output_map.append((i, i))
         else:
             raise NotImplementedError(f"mode = {mode} is not supported.")

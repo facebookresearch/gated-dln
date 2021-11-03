@@ -16,13 +16,13 @@ from src.task.transformations.target import (
 
 def get_tasks(
     mode: str,
-    num_classes_in_original_dataset: int,
+    num_classes_in_selected_dataset: int,
     num_classes_in_full_dataset: int,
     device: torch.device,
 ):
     num_input_transformations, num_output_transformations = get_num_transformations(
         mode=mode,
-        num_classes_in_original_dataset=num_classes_in_original_dataset,
+        num_classes_in_selected_dataset=num_classes_in_selected_dataset,
     )
     if mode in ["rotate"] or mode.startswith("rotate_input"):
         input_transforms = get_list_of_rotation_transformations(
@@ -31,7 +31,7 @@ def get_tasks(
     elif mode in ["permute"] or mode.startswith("permute_input"):
         input_transforms = get_list_of_permutation_transformations(
             mode=mode,
-            num_classes_in_original_dataset=num_classes_in_original_dataset,
+            num_classes_in_selected_dataset=num_classes_in_selected_dataset,
             num_transformations=num_input_transformations,
             device=device,
         )
@@ -45,14 +45,14 @@ def get_tasks(
     ):
         target_transforms = get_list_of_target_transformations_using_class_combination(
             num_transformations=num_input_transformations,
-            num_classes_in_original_dataset=num_classes_in_original_dataset,
+            num_classes_in_selected_dataset=num_classes_in_selected_dataset,
             device=device,
             num_classes_in_full_dataset=num_classes_in_full_dataset,
         )
     elif mode.endswith("permute_target"):
         target_transforms = get_list_of_target_transformations_using_class_permutation(
             num_transformations=num_input_transformations,
-            num_classes_in_original_dataset=num_classes_in_original_dataset,
+            num_classes_in_selected_dataset=num_classes_in_selected_dataset,
             device=device,
         )
     else:
@@ -70,7 +70,7 @@ def get_tasks(
             tasks.append(task)
 
     in_features, out_features = get_in_and_out_features(
-        mode=mode, num_classes_in_original_dataset=num_classes_in_original_dataset
+        mode=mode, num_classes_in_selected_dataset=num_classes_in_selected_dataset
     )
     return TasksForKPathModel(
         tasks=tasks,

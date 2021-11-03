@@ -79,8 +79,8 @@ class Experiment(base_experiment.Experiment):
         for batch in self.dataloaders[mode]:  # noqa: B007
             input, target = batch
             batch_size = input.shape[0]
-            input = input[target < self.num_classes_in_original_dataset]
-            target = target[target < self.num_classes_in_original_dataset]
+            input = input[target < self.num_classes_in_selected_dataset]
+            target = target[target < self.num_classes_in_selected_dataset]
             buffer["input"] = torch.cat([buffer["input"], input], dim=0)
             buffer["target"] = torch.cat([buffer["target"], target], dim=0)
             if buffer["input"].shape[0] >= batch_size:
