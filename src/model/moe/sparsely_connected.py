@@ -1,3 +1,5 @@
+# type: ignore
+
 import hydra
 import torch
 from torch import nn

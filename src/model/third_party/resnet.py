@@ -1,3 +1,4 @@
+# type: ignore
 """
 Properly implemented ResNet-s for CIFAR10 as described in paper [1].
 

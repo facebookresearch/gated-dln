@@ -15,8 +15,10 @@ def instantiate_using_config(cfg: DictConfig, *args, **kwargs):
     module_name, cls_name = cfg._target_.rsplit(".", 1)
     cls = getattr(importlib.import_module(module_name), cls_name)
     cfg_to_init = OmegaConf.to_container(cfg=cfg, resolve=True)
+    assert isinstance(cfg_to_init, dict)
     cfg_to_init.pop("_target_")
-    cfg_to_init.update(kwargs)
+    cfg_to_init.update(kwargs)  # type: ignore
+    # error: Argument 1 to "update" of "dict" has incompatible type "Dict[str, Any]"; expected "Mapping[Union[str, int, Enum, float, bool], Any]"
     return cls(*args, **cfg_to_init)
 
 

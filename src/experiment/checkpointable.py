@@ -1,6 +1,6 @@
 import os
 import pathlib
-from typing import Dict
+from typing import Union
 
 import torch
 import torch.utils.data
@@ -30,7 +30,10 @@ class Experiment:
         self.validate_cfg()
         self.logbook = logbook
         self.device = torch.device(self.cfg.setup.device)
-        self.dataloaders: Dict[str, torch.utils.data.DataLoader]  # type: ignore [syntax]
+        self.dataloaders: Union[
+            dict[str, torch.utils.data.DataLoader],
+            dict[str, tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]],
+        ]  # type: ignore [syntax]
         # Mypy error: syntax error in type comment  [syntax]
 
         self.model: BaseModel

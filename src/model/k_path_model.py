@@ -93,9 +93,9 @@ class BaseModel(BaseModelCls):
 
         self.gate_cfg = gate_cfg
 
-        self.gate = self.make_gate()
+        self.gate: torch.Tensor = self.make_gate()
 
-    def make_gate(self):
+    def make_gate(self) -> torch.Tensor:
         if self.gate_cfg["mode"] == "fully_connected":
             # this value should come from the gate_cfg
             gate = torch.ones(*self.tasks.shape, device="cpu", dtype=torch.float32)
@@ -111,7 +111,7 @@ class BaseModel(BaseModelCls):
         print(gate.shape, gate.sum().item())
         return gate
 
-    def _get_input_output_map(self, mode: str) -> list[tuple(int, int)]:
+    def _get_input_output_map(self, mode: str) -> list[tuple[int, int]]:
         input_output_map = []
         if "_plus_mod" in mode:
             num_cols = int(mode.split("_plus_mod")[0])
@@ -155,7 +155,7 @@ class BaseModel(BaseModelCls):
             logbook=logbook,
         )
 
-    def load(self, name: str, save_dir: str, step: int, logbook: LogBook) -> "Model":
+    def load(self, name: str, save_dir: str, step: int, logbook: LogBook) -> nn.Module:
         self.gate = checkpoint_utils.load_gate(save_dir=save_dir, logbook=logbook)
         return super().load(name=name, save_dir=save_dir, step=step, logbook=logbook)
         # mpyp error: Incompatible return value type (got Module, expected "Model")  [return-value]
@@ -252,8 +252,8 @@ class Model(BaseModel):
         )
         # (batch_size * self.tasks.shape[0], dim)
 
-        output_tensor = self.get_decoder_output(hidden=hidden, batch_size=batch_size)
-
+        output_tensor = self.get_decoder_output(hidden=hidden, batch_size=batch_size)  # type: ignore[operator]
+        # error: "Tensor" not callable  [operator]
         # (batch, self.tasks.shape[0], self.tasks.shape[1], 2)
         transformed_y = [transform(y) for transform in self.tasks.target_transforms]
         # list of size self.tasks.shape[1]
@@ -286,7 +286,7 @@ class Model(BaseModel):
 
     def extract_features(
         self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[list[torch.Tensor], torch.Tensor]:
         batch_size = x.shape[0]
 
         transformed_x = [transform(x) for transform in self.tasks.input_transforms]

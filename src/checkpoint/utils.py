@@ -296,10 +296,11 @@ def load_gate(save_dir: str, logbook: LogBook) -> torch.Tensor:
     Returns:
         Optional[Dict[Any, Any]]: metadata.
     """
+    breakpoint()
     gate_path = f"{save_dir}/gate.pt"
     if not os.path.exists(gate_path):
         logbook.write_message(f"{gate_path} does not exist.")
-        gate = None
+        raise RuntimeError(f"{gate_path} does not exist.")
     else:
         gate = torch.load(gate_path)
     return gate

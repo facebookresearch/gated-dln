@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 from time import time
-from typing import OrderedDict
+from typing import OrderedDict, cast
 
 import hydra
 import torch
 import torch.utils.data
 from omegaconf.dictconfig import DictConfig
+from torch.utils.data.dataloader import DataLoader
 from torchvision import transforms
 from xplogger import metrics as ml_metrics
 from xplogger.logbook import LogBook
@@ -48,19 +49,18 @@ class Experiment(base_experiment.Experiment):
 
             transform = transforms.ToTensor()
             if self.should_use_task_specific_dataloaders:
-
-                self.dataloaders: dict[
-                    str, dict[str, torch.utils.data.DataLoader]
-                ] = hydra.utils.instantiate(self.cfg.dataloader, target_transform=None)
+                # dont recall why we have these.
+                self.dataloaders = hydra.utils.instantiate(
+                    self.cfg.dataloader, target_transform=None
+                )
 
             else:
-                self.dataloaders: dict[
-                    str, torch.utils.data.DataLoader
-                ] = hydra.utils.instantiate(
+                self.dataloaders = hydra.utils.instantiate(
                     self.cfg.dataloader,
                     transform=transform,
                     target_transform=None,
                 )
+                # Attribute "dataloaders" already defined on line 53  [no-redef]
             self.tasks = hydra.utils.instantiate(self.cfg.experiment.task)
 
             self.num_classes_in_selected_dataset = (
@@ -85,17 +85,19 @@ class Experiment(base_experiment.Experiment):
             }
 
             if self.cfg.model.hidden_layer_cfg.should_share:
-                self.compute_metrics_for_batch = (
+                self.compute_metrics_for_batch = (  # type: ignore[assignment]
                     self.compute_metrics_for_batch_when_using_shared_hidden_layer
                 )
+                # Cannot assign to a method  [assignment]
             else:
-                self.compute_metrics_for_batch = (
+                self.compute_metrics_for_batch = (  # type: ignore[assignment]
                     self.compute_metrics_for_batch_without_share_hidden
                 )
+                # Cannot assign to a method  [assignment]
 
             self._post_init()
 
-    def _make_train_state(self, start_step: int) -> None:
+    def _make_train_state(self, start_step: int) -> TrainState:
 
         if self.cfg.dataloader.name == "mnist":
             num_classes = 10
@@ -109,6 +111,7 @@ class Experiment(base_experiment.Experiment):
         )
 
         if self.should_use_task_specific_dataloaders:
+            assert isinstance(self.dataloaders["train"], tuple)
             train_state = TrainState(
                 num_batches_per_epoch=int(
                     len(self.dataloaders["train"][0]) * scaling_ratio
@@ -158,9 +161,12 @@ class Experiment(base_experiment.Experiment):
         # current_metric[f"loss_{key}"] = (loss, total)
         # current_metric[f"accuracy_{key}"] = (num_correct / total, total)
 
-        gate = self.model.gate
-        gate_sum = gate.sum()
-        flipped_gate = (gate == 0).float()
+        gate = self.model.gate  # type: ignore[operator]
+        # "Tensor" not callable  [operator]
+        gate_sum = gate.sum()  # type: ignore[operator]
+        # "Tensor" not callable  [operator]
+        flipped_gate = (gate == 0).float()  # type: ignore[union-attr]
+        # Item "bool" of "Union[Tensor, bool]" has no attribute "float"  [union-attr]
         flipped_gate_sum = flipped_gate.sum()
 
         average_accuracy_for_selected_paths = (num_correct * gate).sum() / (
@@ -219,7 +225,9 @@ class Experiment(base_experiment.Experiment):
                 "target": torch.empty(0, dtype=torch.int64),
             }
         )
-        for batch in self.dataloaders[mode]:  # noqa: B007
+        train_dataloader = cast(self.dataloaders[mode], DataLoader)  # type: ignore[name-defined]
+        # error: Name "self.dataloaders" is not defined  [name-defined]
+        for batch in train_dataloader:  # noqa: B007
             input, target = batch
             batch_size = input.shape[0]
             input = input[target < self.num_classes_in_selected_dataset]
@@ -318,9 +326,15 @@ class Experiment(base_experiment.Experiment):
         self.model.eval()
         mode = "test"
         metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
-        testloader = self.dataloaders[mode]
+        testloader = cast(
+            self.dataloaders[mode], DataLoader  # type: ignore[name-defined]
+        )
+        # Name "self.dataloaders" is not defined  [name-defined]
+
         with torch.inference_mode():
             for batch_idx, batch in enumerate(testloader):  # noqa: B007
+                input: torch.Tensor
+                target: torch.Tensor
                 input, target = batch
                 input = input[target < self.num_classes_in_selected_dataset]
                 target = target[target < self.num_classes_in_selected_dataset]

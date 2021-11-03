@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import json
 from time import time
+from typing import Union
 
 import hydra
 import torch
 import torch.utils.data
 from omegaconf import DictConfig
+from torch.utils.data.dataloader import DataLoader
 from xplogger import metrics as ml_metrics
 from xplogger.logbook import LogBook
 from xplogger.types import LogType
@@ -49,10 +51,12 @@ class Experiment(checkpointable_experiment.Experiment):
         else:
             self.train = self.train_using_one_dataloader
             self.test = self.test_using_one_dataloader
+        self.dataloaders: Union[
+            dict[str, torch.utils.data.DataLoader],
+            dict[str, tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]],
+        ]
         if should_init:
-            self.dataloaders: dict[
-                str, torch.utils.data.DataLoader
-            ] = hydra.utils.instantiate(self.cfg.dataloader)
+            self.dataloaders = hydra.utils.instantiate(self.cfg.dataloader)
             self.model: BaseModel = hydra.utils.instantiate(self.cfg.model).to(
                 self.device
             )
@@ -83,8 +87,9 @@ class Experiment(checkpointable_experiment.Experiment):
         self.should_write_batch_logs = self.cfg.logbook.should_write_batch_logs
         self.startup_logs()
 
-    def _make_train_state(self, start_step: int) -> None:
+    def _make_train_state(self, start_step: int) -> TrainState:
         if self.should_use_task_specific_dataloaders:
+            assert isinstance(self.dataloaders["train"], tuple)
             train_state = TrainState(
                 num_batches_per_epoch=len(self.dataloaders["train"][0]), step=start_step
             )
@@ -116,9 +121,11 @@ class Experiment(checkpointable_experiment.Experiment):
         self.model.train()
         mode = "train"
         metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
+        assert isinstance(self.dataloaders[mode], DataLoader)
         for batch in self.dataloaders[mode]:  # noqa: B007
             current_metric = self.compute_metrics_for_batch(
-                batch=batch,
+                batch=batch,  # type: ignore[arg-type]
+                # Argument "batch" to "compute_metrics_for_batch" of "Experiment" has incompatible type "Union[Any, DataLoader[Any]]"; expected "Tuple[Tensor, Tensor]"  [arg-type]
                 mode=mode,
                 batch_idx=self.train_state.batch,
             )
@@ -134,14 +141,17 @@ class Experiment(checkpointable_experiment.Experiment):
         self.model.train()
         mode = "train"
         metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
-        dataloader1_iter = iter(self.dataloaders[mode][0])
-        for batch2 in self.dataloaders[mode][1]:  # noqa: B007
+        dataloader1_iter = iter(self.dataloaders[mode][0])  # type: ignore[index]
+        # Value of type "Union[DataLoader[Any], Tuple[DataLoader[Any], DataLoader[Any]]]" is not indexable  [index]
+        for batch2 in self.dataloaders[mode][1]:  # type: ignore[index]
+            # Value of type "Union[DataLoader[Any], Tuple[DataLoader[Any], DataLoader[Any]]]" is not indexable  [index]
             batch1 = next(dataloader1_iter)
             current_metric = self.compute_metrics_for_batch(
-                batch=[BatchList([batch1[i], batch2[i]]) for i in range(len(batch1))],
+                batch=[BatchList([batch1[i], batch2[i]]) for i in range(len(batch1))],  # type: ignore[arg-type]
                 mode=mode,
                 batch_idx=self.train_state.batch,
             )
+            # error: Argument "batch" has incompatible type "List[Any]"; expected "Tuple[Tensor, Tensor]"  [arg-type]
             self.train_state.step += 1
             metric_dict.update(metrics_dict=current_metric)
         metric_dict = metric_dict.to_dict()
@@ -171,19 +181,21 @@ class Experiment(checkpointable_experiment.Experiment):
         self.model.eval()
         mode = "test"
         metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
-
-        testloader1_iter = iter(self.dataloaders[mode][0])
-        testloader2 = self.dataloaders[mode][1]
+        testloader1_iter = iter(self.dataloaders[mode][0])  # type: ignore[index]
+        # Value of type "Union[DataLoader[Any], Tuple[DataLoader[Any], DataLoader[Any]]]" is not indexable  [index]
+        testloader2 = self.dataloaders[mode][1]  # type: ignore[index]
+        # Value of type "Union[DataLoader[Any], Tuple[DataLoader[Any], DataLoader[Any]]]" is not indexable  [index]
         with torch.no_grad():
             for batch_idx, batch2 in enumerate(testloader2):  # noqa: B007
                 batch1 = next(testloader1_iter)
                 current_metric = self.compute_metrics_for_batch(
                     batch=[
-                        BatchList([batch1[i], batch2[i]]) for i in range(len(batch1))
+                        BatchList([batch1[i], batch2[i]]) for i in range(len(batch1))  # type: ignore[arg-type]
                     ],
                     mode=mode,
                     batch_idx=batch_idx,
                 )
+                # error: Argument "batch" has incompatible type "List[Any]"; expected "Tuple[Tensor, Tensor]"  [arg-type]
                 metric_dict.update(metrics_dict=current_metric)
         metric_dict = metric_dict.to_dict()
         metric_dict.pop("batch_index")

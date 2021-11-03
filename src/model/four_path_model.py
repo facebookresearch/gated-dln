@@ -1,3 +1,5 @@
+# type: ignore
+
 """Class to interface with an Experiment"""
 from __future__ import annotations
 

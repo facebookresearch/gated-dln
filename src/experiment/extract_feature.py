@@ -56,16 +56,21 @@ class Experiment(base_experiment.Experiment):
         inputs, targets = [_tensor.to(self.device) for _tensor in batch]
         metadata = self.metadata[mode]
         with torch.inference_mode():
-            encoder_output, hidden_output = self.model.extract_features(
-                x=inputs, y=targets, metadata=metadata
+            encoder_output, hidden_output = self.model.extract_features(  # type: ignore[operator]
+                # "Tensor" not callable  [operator]
+                x=inputs,
+                y=targets,
+                metadata=metadata,
             )
         features = ModelFeature(
             encoder_output=torch.cat(encoder_output, dim=1).to("cpu"),
             hidden_output=hidden_output.view(
-                batch[0].shape[0], self.model.gate.shape[1], hidden_output.shape[-1]
+                batch[0].shape[0], self.model.gate.shape[1], hidden_output.shape[-1]  # type: ignore[index]
             ).to("cpu"),
-            gate=self.model.gate.to("cpu"),
+            #  error: Value of type "Union[Size, Tensor, Module]" is not indexable  [index]
+            gate=self.model.gate.to("cpu"),  # type: ignore[arg-type]
         )
+        # Argument "gate" to "ModelFeature" has incompatible type "Union[Tensor, Module]"; expected "Tensor"  [arg-type]
         return features
 
     def compute_feature_using_one_dataloader(self) -> None:
@@ -76,6 +81,8 @@ class Experiment(base_experiment.Experiment):
             }
         )
         mode = "train"
+        input: torch.Tensor
+        target: torch.Tensor
         for batch in self.dataloaders[mode]:  # noqa: B007
             input, target = batch
             batch_size = input.shape[0]
@@ -88,10 +95,11 @@ class Experiment(base_experiment.Experiment):
                 for key in buffer:
                     buffer[key] = buffer[key][batch_size:]
                 model_feature = self.compute_features_for_batch(
-                    batch=batch,
+                    batch=batch,  # type: ignore[arg-type]
                     mode=mode,
                     batch_idx=self.train_state.batch,
                 )
+                # error: Argument "batch" has incompatible type "List[Any]"; expected "Tuple[Tensor, Tensor]"  [arg-type]
                 torch.save(
                     dataclasses.asdict(model_feature),
                     f"{self.cfg.setup.save_dir}/model_features.tar",
@@ -107,14 +115,16 @@ class Experiment(base_experiment.Experiment):
     ) -> LogType:
         inputs, targets = [_tensor.to(self.device) for _tensor in batch]
         metadata = self.metadata[mode]
-        encoder_output, hidden_output = self.model.extract_features(
+        encoder_output, hidden_output = self.model.extract_features(  # type: ignore[operator]
             x=inputs, y=targets, metadata=metadata
         )
+        # "Tensor" not callable  [operator]
         features = ModelFeature(
             encoder_output=encoder_output,
             hidden_output=hidden_output,
-            gate=self.model.gate,
+            gate=self.model.gate,  # type: ignore[arg-type]
         )
+        # Argument "gate" to "ModelFeature" has incompatible type "Union[Tensor, Module]"; expected "Tensor"  [arg-type]
 
         return features
 

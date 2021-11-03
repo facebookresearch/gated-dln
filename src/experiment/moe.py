@@ -1,3 +1,4 @@
+# type: ignore
 """Class to interface with an Experiment"""
 
 from __future__ import annotations
@@ -39,7 +40,7 @@ class Experiment(base_experiment.Experiment):
         inputs, targets = [_tensor.to(self.device) for _tensor in batch]
         metadata = Metadata(
             experiment_mode=ExperimentMode(mode),
-            moe_mask_mode=MoeMaskMode(self.config.experiment.moe.mask.mode[mode]),
+            moe_mask_mode=MoeMaskMode(self.cfg.experiment.moe.mask.mode[mode]),
         )
         outputs, loss, num_correct = self.model(x=inputs, y=targets, metadata=metadata)
         if should_train:

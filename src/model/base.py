@@ -62,7 +62,7 @@ class Model(nn.Module):
             logbook=logbook,
         )
 
-    def load(self, name: str, save_dir: str, step: int, logbook: LogBook) -> "Model":
+    def load(self, name: str, save_dir: str, step: int, logbook: LogBook) -> nn.Module:
         return checkpoint_utils.load_model(  # type: ignore[return-value]
             model=self, name=name, save_dir=save_dir, step=step, logbook=logbook
         )

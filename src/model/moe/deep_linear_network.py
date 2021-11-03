@@ -1,3 +1,4 @@
+# type: ignore
 from src.model.moe import sparsely_connected
 from src.utils.config import DictConfig
 

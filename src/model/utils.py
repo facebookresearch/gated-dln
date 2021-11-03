@@ -78,7 +78,8 @@ def get_hidden(num_layers: int, hidden_size: int, should_use_non_linearity: bool
 def get_decoder(
     num_layers: int, out_features: int, hidden_size: int, should_use_non_linearity: bool
 ):
-    layers = []
+    layers: nn.ModuleList = []  # type: ignore[assignment]
+    # Incompatible types in assignment (expression has type "List[<nothing>]", variable has type "ModuleList")
     for _ in range(num_layers - 1):
         if should_use_non_linearity:
             layers.append(nn.ReLU())

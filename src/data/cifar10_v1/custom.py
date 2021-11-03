@@ -1,4 +1,6 @@
+# type: ignore
 """Collection of CIFAR datasets that are grouped by classes. For more details refer #28"""
+
 
 from typing import Callable, Optional, OrderedDict
 
