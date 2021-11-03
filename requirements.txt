@@ -1,5 +1,12 @@
 black==21.9b0
-hydra-core==1.1.0
-notifiers==1.2.1
+flake8-bugbear==21.9.2
+flake8-comprehensions==3.7.0
+flake8-docstrings==1.6.0
+flake8==4.0.1
+hiplot==0.1.31
+hydra-core==1.1.1
 hydra-submitit-launcher==1.1.6
-pymonogo==3.12.1
+isort==5.10.0
+mypy==0.910
+typing-extensions==3.10.0.2
+yamllint==1.26.3
