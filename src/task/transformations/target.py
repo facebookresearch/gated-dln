@@ -6,10 +6,12 @@ import torch
 
 
 def get_target_transform_using_class_combination(
-    class_combination: list[int], device: torch.device
+    num_classes_in_full_dataset: int,
+    class_combination: tuple[int, ...],
+    device: torch.device,
 ):
-
-    cache = torch.zeros(10, dtype=torch.long)
+    # todo: reproduce some previous results.
+    cache = torch.zeros(num_classes_in_full_dataset, dtype=torch.long)
     for class_idx in class_combination:
         cache[class_idx] = 1
     cache = cache.to(device)
@@ -21,7 +23,10 @@ def get_target_transform_using_class_combination(
 
 
 def get_list_of_target_transformations_using_class_combination(
-    num_transformations: int, num_classes_in_original_dataset: int, device: torch.device
+    num_transformations: int,
+    num_classes_in_original_dataset: int,
+    num_classes_in_full_dataset: int,
+    device: torch.device,
 ):
     class_combinations = list(
         itertools.combinations(
@@ -33,7 +38,9 @@ def get_list_of_target_transformations_using_class_combination(
     for output_index in range(num_transformations):
         target_transforms.append(
             get_target_transform_using_class_combination(
-                class_combination=class_combinations[output_index], device=device
+                num_classes_in_full_dataset=num_classes_in_full_dataset,
+                class_combination=class_combinations[output_index],
+                device=device,
             )
         )
 
@@ -41,7 +48,7 @@ def get_list_of_target_transformations_using_class_combination(
 
 
 def get_target_transform_using_class_permutation(
-    class_permutation: list[int], device: torch.device
+    class_permutation: tuple[int, ...], device: torch.device
 ):
 
     cache = torch.zeros(len(class_permutation), dtype=torch.long)

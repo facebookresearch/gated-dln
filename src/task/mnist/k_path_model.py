@@ -1,20 +1,28 @@
 from __future__ import annotations
 
+import torch
+
 from src.experiment.ds import Task, TasksForKPathModel
-from src.task.mnist.input_transforms import (
+from src.task.mnist.utils import get_in_and_out_features, get_num_transformations
+from src.task.transformations.input import (
     get_list_of_permutation_transformations,
     get_list_of_rotation_transformations,
 )
-from src.task.mnist.target_transforms import (
+from src.task.transformations.target import (
     get_list_of_target_transformations_using_class_combination,
     get_list_of_target_transformations_using_class_permutation,
 )
-from src.task.mnist.utils import get_in_and_out_features, get_num_transformations
 
 
-def get_tasks(mode: str, num_classes_in_original_dataset: int, device: str):
+def get_tasks(
+    mode: str,
+    num_classes_in_original_dataset: int,
+    num_classes_in_full_dataset: int,
+    device: torch.device,
+):
     num_input_transformations, num_output_transformations = get_num_transformations(
-        mode=mode, num_classes_in_original_dataset=num_classes_in_original_dataset
+        mode=mode,
+        num_classes_in_original_dataset=num_classes_in_original_dataset,
     )
     if mode in ["rotate"] or mode.startswith("rotate_input"):
         input_transforms = get_list_of_rotation_transformations(
@@ -39,6 +47,7 @@ def get_tasks(mode: str, num_classes_in_original_dataset: int, device: str):
             num_transformations=num_input_transformations,
             num_classes_in_original_dataset=num_classes_in_original_dataset,
             device=device,
+            num_classes_in_full_dataset=num_classes_in_full_dataset,
         )
     elif mode.endswith("permute_target"):
         target_transforms = get_list_of_target_transformations_using_class_permutation(
