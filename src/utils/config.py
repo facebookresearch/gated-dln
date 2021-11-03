@@ -139,11 +139,8 @@ def read_json_config_from_file(config_path: str) -> DictConfig:
     Returns:
         DictConfig:
     """
-    try:
-        with open(config_path) as f:
-            config = json.load(f)
-    except:
-        breakpoint()
+    with open(config_path) as f:
+        config = json.load(f)
     config = OmegaConf.create(config)
     assert isinstance(config, DictConfig)
     return set_struct(make_config_immutable(config))

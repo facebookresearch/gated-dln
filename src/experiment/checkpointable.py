@@ -43,7 +43,11 @@ class Experiment:
         self.metadata: dict[str, ExperimentMetadata]
 
     def validate_cfg(self):
-        if self.cfg.model.name in ["four_path_model", "k_path_model", "k_path_model_without_share_hidden"]:
+        if self.cfg.model.name in [
+            "four_path_model",
+            "k_path_model",
+            "k_path_model_without_share_hidden",
+        ]:
             assert not self.cfg.model.decoder_cfg.should_share
             if self.cfg.model.name in ["k_path_model_without_share_hidden"]:
                 assert not self.cfg.model.hidden_layer_cfg.should_share

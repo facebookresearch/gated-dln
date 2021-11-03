@@ -82,7 +82,7 @@ class Experiment(checkpointable_experiment.Experiment):
 
         self.should_write_batch_logs = self.cfg.logbook.should_write_batch_logs
         self.startup_logs()
-    
+
     def _make_train_state(self, start_step: int) -> None:
         if self.should_use_task_specific_dataloaders:
             train_state = TrainState(

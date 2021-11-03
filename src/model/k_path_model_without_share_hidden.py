@@ -9,7 +9,6 @@ from torch import nn
 from src.experiment.ds import ExperimentMetadata, TasksForKPathModel
 from src.model import utils as model_utils
 from src.model.base import Model as BaseModel
-from src.utils.config import DictConfig
 
 
 class Model(BaseModel):
