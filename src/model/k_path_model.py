@@ -283,3 +283,19 @@ class Model(BaseModel):
             .sum(dim=0)
         )
         return loss.detach(), loss_to_backprop, num_correct
+
+    def extract_features(
+        self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        batch_size = x.shape[0]
+
+        transformed_x = [transform(x) for transform in self.tasks.input_transforms]
+        features = [
+            encoder(x).unsqueeze(1) for encoder, x in zip(self.encoders, transformed_x)
+        ]
+        hidden = self.hidden_layer(
+            torch.cat(features, dim=1).view(
+                batch_size * self.tasks.shape[0], features[0].shape[2]
+            )
+        )
+        return features, hidden

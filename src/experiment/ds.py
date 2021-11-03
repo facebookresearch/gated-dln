@@ -65,3 +65,10 @@ class TasksForKPathModel:
     shape: tuple[int, int]
     input_transforms: list
     target_transforms: list
+
+
+@dataclass
+class ModelFeature:
+    encoder_output: torch.Tensor
+    hidden_output: torch.Tensor
+    gate: torch.Tensor
