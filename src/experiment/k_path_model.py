@@ -225,7 +225,7 @@ class Experiment(base_experiment.Experiment):
                 "target": torch.empty(0, dtype=torch.int64),
             }
         )
-        train_dataloader = cast(self.dataloaders[mode], DataLoader)  # type: ignore[name-defined]
+        train_dataloader = cast(DataLoader, self.dataloaders[mode])  # type: ignore[name-defined]
         # error: Name "self.dataloaders" is not defined  [name-defined]
         for batch in train_dataloader:  # noqa: B007
             input, target = batch
@@ -327,7 +327,8 @@ class Experiment(base_experiment.Experiment):
         mode = "test"
         metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
         testloader = cast(
-            self.dataloaders[mode], DataLoader  # type: ignore[name-defined]
+            DataLoader,
+            self.dataloaders[mode],  # type: ignore[name-defined]
         )
         # Name "self.dataloaders" is not defined  [name-defined]
 
