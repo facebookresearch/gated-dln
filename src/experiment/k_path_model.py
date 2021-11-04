@@ -101,6 +101,8 @@ class Experiment(base_experiment.Experiment):
 
         if self.cfg.dataloader.name == "mnist":
             num_classes = 10
+        elif self.cfg.dataloader.name == "cifar10":
+            num_classes = 10
         else:
             raise ValueError(
                 f"dataloader_name={self.cfg.dataloader.name} is not supported."
@@ -214,6 +216,16 @@ class Experiment(base_experiment.Experiment):
         current_metric.pop("time_taken")
         return current_metric
 
+    def _get_input_shape(self) -> tuple[int, ...]:
+        if self.cfg.dataloader.name == "mnist":
+            return (1, 28, 28)
+        elif self.cfg.dataloader.name == "cifar10":
+            return (3, 32, 32)
+        else:
+            raise ValueError(
+                f"dataloader_name={self.cfg.dataloader.name} is not supported."
+            )
+
     def train_using_one_dataloader(self) -> None:
         epoch_start_time = time()
         self.model.train()
@@ -221,7 +233,7 @@ class Experiment(base_experiment.Experiment):
         metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
         buffer = OrderedDict(
             {
-                "input": torch.empty(0, 1, 28, 28),
+                "input": torch.empty(0, *self._get_input_shape()),
                 "target": torch.empty(0, dtype=torch.int64),
             }
         )
