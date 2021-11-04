@@ -14,6 +14,7 @@ save:
   dir: ${setup.save_dir}
 task:
   _target_: src.task.${dataloader.name}.${experiment.name}.get_tasks
+  name: ${dataloader.name}
   mode: rotate
   num_classes_in_selected_dataset: 4
   device: ${setup.device}

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import pathlib
 
+import hydra
 import torch
 import torch.utils.data
 from omegaconf import DictConfig
@@ -29,6 +30,7 @@ class BaseModel(BaseModelCls):
         should_use_non_linearity: bool,
         weight_init: dict,
         gate_cfg: DictConfig,
+        pretrained_cfg: DictConfig,
         description: str = "k path model. We train O(k) paths and evaluate on O(k**2) paths.",
     ):
         super().__init__(name=name, model_cfg=None, description=description)  # type: ignore[arg-type]
@@ -38,6 +40,11 @@ class BaseModel(BaseModelCls):
 
         assert decoder_cfg["should_share"] is False
 
+        self._pretrained_model, in_features = hydra.utils.instantiate(pretrained_cfg)
+
+        if in_features == -1:
+            in_features = self.tasks.in_features
+
         self.tasks = tasks
 
         hidden_size = hidden_layer_cfg["dim"]
@@ -45,7 +52,7 @@ class BaseModel(BaseModelCls):
         self.encoders = nn.ModuleList(
             [
                 model_utils.get_encoder(
-                    in_features=self.tasks.in_features,
+                    in_features=in_features,
                     num_layers=num_layers,
                     hidden_size=hidden_size,
                     should_use_non_linearity=should_use_non_linearity,
@@ -173,6 +180,7 @@ class Model(BaseModel):
         should_use_non_linearity: bool,
         weight_init: dict,
         gate_cfg: DictConfig,
+        pretrained_cfg: DictConfig,
         description: str = "k path model. We train O(k) paths and evaluate on O(k**2) paths.",
     ):
         super().__init__(
@@ -185,6 +193,7 @@ class Model(BaseModel):
             should_use_non_linearity=should_use_non_linearity,
             weight_init=weight_init,
             gate_cfg=gate_cfg,
+            pretrained_cfg=pretrained_cfg,
             description=description,
         )  # type: ignore[arg-type]
         # error: Argument "model_cfg" to "__init__" of "Model" has incompatible type "None"; expected "DictConfig"
@@ -240,8 +249,10 @@ class Model(BaseModel):
         self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         batch_size = x.shape[0]
-
-        transformed_x = [transform(x) for transform in self.tasks.input_transforms]
+        transformed_x = [
+            self._pretrained_model(transform(x))
+            for transform in self.tasks.input_transforms
+        ]
         features = [
             encoder(x).unsqueeze(1) for encoder, x in zip(self.encoders, transformed_x)
         ]

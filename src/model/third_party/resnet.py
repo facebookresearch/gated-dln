@@ -127,6 +127,10 @@ class ResNet(nn.Module):
 
         self.apply(_weights_init)
         self.should_use_for_feature_extraction = should_use_for_feature_extraction
+        if self.should_use_for_feature_extraction:
+            self.output_dim = 2048
+        else:
+            self.output_dim = 10
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1] * (num_blocks - 1)

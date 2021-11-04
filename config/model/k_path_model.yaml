@@ -16,3 +16,14 @@ weight_init:
 gate_cfg:
   mode: one_plus_mod
   num_classes_in_selected_dataset: ${experiment.task.num_classes_in_selected_dataset}
+pretrained_cfg:
+  _target_: src.model.utils.get_pretrained_model
+  _recursive_: False
+  should_use: True
+  model_cfg:
+    _target_: src.model.third_party.resnet.resnet20_for_feature_extraction
+  should_load_weights: True
+  path_to_load_weights: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt
+  should_finetune: False
+  should_enable_jit: False # Do not enable as it does not work. Tracked in #
+  

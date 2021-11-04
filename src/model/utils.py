@@ -3,8 +3,10 @@ from __future__ import annotations
 
 from typing import Any
 
+import hydra
 import torch
 import torch.utils.data
+from omegaconf.dictconfig import DictConfig
 from torch import nn
 
 from src.model.moe import layer as moe_layer
@@ -118,3 +120,24 @@ def get_container_model(model_list: list[nn.Module], should_use_non_linearity: b
         container.pop()
 
     return nn.Sequential(*container)
+
+
+def get_pretrained_model(
+    should_use: bool,
+    model_cfg: DictConfig,
+    should_load_weights: bool,
+    path_to_load_weights: str,
+    should_finetune: bool,
+    should_enable_jit: bool,
+) -> tuple[Any, int]:
+    if should_use:
+        model = hydra.utils.instantiate(model_cfg)
+        if should_load_weights:
+            checkpoint = torch.load(path_to_load_weights)
+            model.load_state_dict(checkpoint)
+        model.requires_grad_(should_finetune)
+        if should_enable_jit:
+            model = torch.jit.script(model)
+        return model, model.output_dim
+    else:
+        return lambda x: x, -1
