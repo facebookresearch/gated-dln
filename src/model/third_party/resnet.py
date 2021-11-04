@@ -128,7 +128,7 @@ class ResNet(nn.Module):
         self.apply(_weights_init)
         self.should_use_for_feature_extraction = should_use_for_feature_extraction
         if self.should_use_for_feature_extraction:
-            self.output_dim = 2048
+            self.output_dim = 512
         else:
             self.output_dim = 10
 
@@ -146,7 +146,7 @@ class ResNet(nn.Module):
         out = self.layer1(out)
         out = self.layer2(out)
         if self.should_use_for_feature_extraction:
-            out = F.avg_pool2d(out, 2, 2)
+            out = F.avg_pool2d(out, 4, 4)
             out = out.view(out.size(0), -1)
         else:
             out = self.layer3(out)

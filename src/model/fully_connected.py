@@ -58,5 +58,5 @@ def get_input_output_sizes(dataset_name: str) -> Tuple[int, int]:
     if dataset_name == "mnist":
         return (784, 10)
     elif dataset_name == "cifar10":
-        return (2048, 10)
+        return (512, 10)
     raise ValueError(f"dataset_name={dataset_name} is not supported")
