@@ -135,9 +135,12 @@ def get_pretrained_model(
         if should_load_weights:
             checkpoint = torch.load(path_to_load_weights)
             model.load_state_dict(checkpoint)
-        model.requires_grad_(should_finetune)
+
         if should_enable_jit:
             model = torch.jit.script(model)
+        assert should_finetune == False
+        model = model.eval()
+        model.requires_grad_(should_finetune)
         return model, model.output_dim
     else:
         return lambda x: x, -1
