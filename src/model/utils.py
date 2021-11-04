@@ -138,7 +138,7 @@ def get_pretrained_model(
 
         if should_enable_jit:
             model = torch.jit.script(model)
-        assert should_finetune == False
+        assert should_finetune is False
         model = model.eval()
         model.requires_grad_(should_finetune)
         return model, model.output_dim

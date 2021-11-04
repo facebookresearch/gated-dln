@@ -18,7 +18,7 @@ hydra:
     dir: /private/home/sodhani/projects/abstraction_by_gating/outputs/${setup.id}/${now:%Y-%m-%d_%H-%M-%S}
 
   launcher:
-    timeout_min: 600
+    timeout_min: 4310
     cpus_per_task: 10
     gpus_per_node: 1
     tasks_per_node: 1
