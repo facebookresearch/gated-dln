@@ -42,6 +42,16 @@ class BaseModel(BaseModelCls):
 
         self._pretrained_model, in_features = hydra.utils.instantiate(pretrained_cfg)
 
+        if pretrained_cfg["should_finetune"]:
+            self.get_output_from_pretrained_model = (
+                self.get_output_from_pretrained_model_in_train_mode
+            )
+
+        else:
+            self.get_output_from_pretrained_model = (
+                self.get_output_from_pretrained_model_in_inference_mode
+            )
+
         if in_features == -1:
             in_features = self.tasks.in_features
 
@@ -101,6 +111,23 @@ class BaseModel(BaseModelCls):
         self.gate_cfg = gate_cfg
 
         self.gate: torch.Tensor = self.make_gate()
+
+    @torch.no_grad()
+    def get_output_from_pretrained_model_in_no_grad_mode(
+        self, x: torch.Tensor
+    ) -> torch.Tensor:
+        return self._pretrained_model(x)
+
+    @torch.inference_mode()
+    def get_output_from_pretrained_model_in_inference_mode(
+        self, x: torch.Tensor
+    ) -> torch.Tensor:
+        return self._pretrained_model(x)
+
+    def get_output_from_pretrained_model_in_train_mode(
+        self, x: torch.Tensor
+    ) -> torch.Tensor:
+        return self._pretrained_model(x)
 
     def make_gate(self) -> torch.Tensor:
         if self.gate_cfg["mode"] == "fully_connected":
@@ -250,9 +277,21 @@ class Model(BaseModel):
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         batch_size = x.shape[0]
         transformed_x = [
-            self._pretrained_model(transform(x))
+            self.get_output_from_pretrained_model(transform(x)).clone()
             for transform in self.tasks.input_transforms
         ]
+        # [(8, dim), (8, dim), (8, dim)...10 times]
+        # with torch.inference_mode():
+        # transformed_x = [transform(x) for transform in self.tasks.input_transforms]
+        # [(8, dim), (8, dim), (8, dim)...10 times]
+
+        # breakpoint()
+
+        # with torch.inference_mode():
+        # transformed_x = self._pretrained_model(torch.cat(transformed_x, dim=0))
+        #         self.get_output_from_pretrained_model(transform(x)).clone()
+        #         for transform in self.tasks.input_transforms
+        #     ]
         features = [
             encoder(x).unsqueeze(1) for encoder, x in zip(self.encoders, transformed_x)
         ]
