@@ -39,7 +39,7 @@ def save_random_state(save_dir: str, step: int, logbook: LogBook) -> None:
     random_state = {
         "np": np.random.get_state(),
         "python": random.getstate(),
-        "pytorch": torch.get_rng_state(),  # type: ignore
+        "pytorch": torch.get_rng_state(),  
     }
     path_to_save_at = f"{save_dir}/random_state.pt"
     torch.save(random_state, path_to_save_at)
@@ -338,4 +338,4 @@ def load_random_state(save_dir: str, step: int, logbook: LogBook) -> None:
     assert random_state is not None
     np.random.set_state(random_state["np"])
     random.setstate(random_state["python"])
-    torch.set_rng_state(random_state["pytorch"])  # type: ignore
+    torch.set_rng_state(random_state["pytorch"])

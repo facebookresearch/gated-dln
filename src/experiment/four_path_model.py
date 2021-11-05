@@ -104,8 +104,7 @@ class Experiment(base_experiment.Experiment):
         aggregated_loss = sum(loss.values()) / 2
         if should_train:
             self.optimizer.zero_grad(set_to_none=True)
-            aggregated_loss.backward()  # type: ignore[union-attr]
-            # error: Item "float" of "Union[Any, float]" has no attribute "backward"
+            aggregated_loss.backward()
             self.optimizer.step()
         if self.should_use_task_specific_dataloaders:
             total = targets[0].size(0)

@@ -33,8 +33,7 @@ class Experiment:
         self.dataloaders: Union[
             dict[str, torch.utils.data.DataLoader],
             dict[str, tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]],
-        ]  # type: ignore [syntax]
-        # Mypy error: syntax error in type comment  [syntax]
+        ]
 
         self.model: BaseModel
 
@@ -160,8 +159,9 @@ class Experiment:
     def load(self, step: int) -> None:
         """Method to load the entire experiment"""
 
-        self.model.load(name="model", save_dir=self.save_dir, step=step, logbook=self.logbook)  # type: ignore[operator]
-        # mypy error: "Tensor" not callable  [operator]
+        self.model.load(
+            name="model", save_dir=self.save_dir, step=step, logbook=self.logbook
+        )
         self.load_optimizer(step=step)
 
         checkpoint_utils.load_random_state(

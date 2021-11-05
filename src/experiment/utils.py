@@ -22,7 +22,7 @@ def prepare_and_run(config: DictConfig, logbook: LogBook) -> None:
     logbook.write_message(
         f"Starting Experiment at {time.asctime(time.localtime(time.time()))}"
     )
-    logbook.write_message(f"torch version = {torch.__version__}")  # type: ignore
+    logbook.write_message(f"torch version = {torch.__version__}")
     experiment = hydra.utils.instantiate(
         config.experiment.builder, config, logbook
     )  # cant seem to pass as a kwargs

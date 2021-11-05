@@ -52,10 +52,10 @@ class BaseModel(BaseModelCls):
                 self.get_output_from_pretrained_model_in_inference_mode
             )
 
+        self.tasks = tasks
+
         if in_features == -1:
             in_features = self.tasks.in_features
-
-        self.tasks = tasks
 
         hidden_size = hidden_layer_cfg["dim"]
 
@@ -222,8 +222,7 @@ class Model(BaseModel):
             gate_cfg=gate_cfg,
             pretrained_cfg=pretrained_cfg,
             description=description,
-        )  # type: ignore[arg-type]
-        # error: Argument "model_cfg" to "__init__" of "Model" has incompatible type "None"; expected "DictConfig"
+        )
 
         hidden_size = hidden_layer_cfg["dim"]
 

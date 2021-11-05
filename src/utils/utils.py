@@ -90,8 +90,7 @@ def set_seed(seed: int) -> None:
     """
     random.seed(seed)
     np.random.seed(seed)
-    torch.manual_seed(seed)  # type: ignore
-    # Module has no attribute "manual_seed_all"  [attr-defined]
+    torch.manual_seed(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
 
 

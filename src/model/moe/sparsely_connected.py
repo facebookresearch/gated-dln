@@ -37,8 +37,7 @@ class Model(base_model.Model):
                 in_features=model_cfg.hidden_size, out_features=output_size
             )
         else:
-            self.classifier = build_moe_classifier(  # type: ignore[assignment]
-                # error: Incompatible types in assignment (expression has type Module, variable has type "Linear")  [assignment]
+            self.classifier = build_moe_classifier(
                 model_cfg=self.model_cfg,
                 should_use_non_linearity=should_use_non_linearity,
             )

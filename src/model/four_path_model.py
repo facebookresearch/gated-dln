@@ -30,8 +30,7 @@ class Model(BaseModel):
         should_use_two_batches: bool,
         description: str = "Four path model. We train three paths and evaluate on the fourth path.",
     ):
-        super().__init__(name=name, model_cfg=None, description=description)  # type: ignore[arg-type]
-        # error: Argument "model_cfg" to "__init__" of "Model" has incompatible type "None"; expected "DictConfig"
+        super().__init__(name=name, model_cfg=None, description=description)
 
         self.task_one_name = task_one.name
 

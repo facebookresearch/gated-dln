@@ -16,6 +16,7 @@ def get_in_and_out_features(
 
 
 def get_input_shape(dataset_name: str) -> tuple[int, ...]:
+    input_shape: tuple[int, ...]
     if dataset_name == "cifar10":
         input_shape = (3, 32, 32)
     elif dataset_name == "mnist":

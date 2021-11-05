@@ -55,6 +55,7 @@ def build_model(model_cfg: DictConfig, should_use_non_linearity: bool) -> nn.Mod
 
 
 def get_input_output_sizes(dataset_name: str) -> Tuple[int, int]:
+    breakpoint()
     if dataset_name == "mnist":
         return (784, 10)
     elif dataset_name == "cifar10":

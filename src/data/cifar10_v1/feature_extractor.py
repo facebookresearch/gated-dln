@@ -8,9 +8,11 @@ class ResNetModel(torch.nn.Module):
         super().__init__()
         self.name = name
         if self.name == "resnet20":
-            self.resnet_model = resnet_family.resnet20_for_feature_extraction()
+            self.resnet_model = resnet_family.resnet20_for_feature_extraction()  # type: ignore[attr-defined]
+            # error: Module has no attribute "resnet20_for_feature_extraction"  [attr-defined]
         elif self.name == "resnet110":
-            self.resnet_model = resnet_family.resnet110_for_feature_extraction()
+            self.resnet_model = resnet_family.resnet110_for_feature_extraction()  # type: ignore[attr-defined]
+            # error: Module has no attribute "resnet110_for_feature_extraction"  [attr-defined]
         else:
             raise NotImplementedError(f"name = {name} is not supported.")
         if should_use_pretrained:

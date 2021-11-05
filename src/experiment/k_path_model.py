@@ -144,8 +144,7 @@ class Experiment(base_experiment.Experiment):
         )
         if should_train:
             self.optimizer.zero_grad(set_to_none=True)
-            loss_to_backprop.backward()  # type: ignore[union-attr]
-            # error: Item "float" of "Union[Any, float]" has no attribute "backward"
+            loss_to_backprop.backward()
             self.optimizer.step()
         if self.should_use_task_specific_dataloaders:
             total = targets[0].size(0)
@@ -163,8 +162,7 @@ class Experiment(base_experiment.Experiment):
         # current_metric[f"loss_{key}"] = (loss, total)
         # current_metric[f"accuracy_{key}"] = (num_correct / total, total)
 
-        gate = self.model.gate  # type: ignore[operator]
-        # "Tensor" not callable  [operator]
+        gate = self.model.gate
         gate_sum = gate.sum()  # type: ignore[operator]
         # "Tensor" not callable  [operator]
         flipped_gate = (gate == 0).float()  # type: ignore[union-attr]
@@ -237,8 +235,7 @@ class Experiment(base_experiment.Experiment):
                 "target": torch.empty(0, dtype=torch.int64),
             }
         )
-        train_dataloader = cast(DataLoader, self.dataloaders[mode])  # type: ignore[name-defined]
-        # error: Name "self.dataloaders" is not defined  [name-defined]
+        train_dataloader = cast(DataLoader, self.dataloaders[mode])
         for batch in train_dataloader:  # noqa: B007
             input, target = batch
             batch_size = input.shape[0]
@@ -293,8 +290,7 @@ class Experiment(base_experiment.Experiment):
         )
         if should_train:
             self.optimizer.zero_grad(set_to_none=True)
-            loss_to_backprop.backward()  # type: ignore[union-attr]
-            # error: Item "float" of "Union[Any, float]" has no attribute "backward"
+            loss_to_backprop.backward()
             self.optimizer.step()
         if self.should_use_task_specific_dataloaders:
             total = targets[0].size(0)
@@ -340,9 +336,8 @@ class Experiment(base_experiment.Experiment):
         metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
         testloader = cast(
             DataLoader,
-            self.dataloaders[mode],  # type: ignore[name-defined]
+            self.dataloaders[mode],
         )
-        # Name "self.dataloaders" is not defined  [name-defined]
 
         with torch.inference_mode():
             for batch_idx, batch in enumerate(testloader):  # noqa: B007

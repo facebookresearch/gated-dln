@@ -63,7 +63,6 @@ class Model(nn.Module):
         )
 
     def load(self, name: str, save_dir: str, step: int, logbook: LogBook) -> nn.Module:
-        return checkpoint_utils.load_model(  # type: ignore[return-value]
+        return checkpoint_utils.load_model(
             model=self, name=name, save_dir=save_dir, step=step, logbook=logbook
         )
-        # mpyp error: Incompatible return value type (got Module, expected "Model")  [return-value]
