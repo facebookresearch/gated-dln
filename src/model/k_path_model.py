@@ -129,6 +129,12 @@ class BaseModel(BaseModelCls):
     ) -> torch.Tensor:
         return self._pretrained_model(x)
 
+    def train(self, mode: bool = True):
+        super().train(mode=mode)
+        self._pretrained_model.eval()
+        # we want the pretrained model to be in eval mode all the time.
+        return self
+
     def make_gate(self) -> torch.Tensor:
         if self.gate_cfg["mode"] == "fully_connected":
             # this value should come from the gate_cfg
