@@ -29,6 +29,25 @@ def prepare_and_run(config: DictConfig, logbook: LogBook) -> None:
     experiment.run()
 
 
+def prepare_and_extract_features(config: DictConfig, logbook: LogBook) -> None:
+    """Prepare an experiment and extract features
+
+    Args:
+        config (DictConfig): config of the experiment
+        logbook (LogBook):
+    """
+
+    set_seed(seed=config.setup.seed)
+    logbook.write_message(
+        f"Starting Experiment at {time.asctime(time.localtime(time.time()))}"
+    )
+    logbook.write_message(f"torch version = {torch.__version__}")
+    experiment = hydra.utils.instantiate(
+        config.experiment.builder, config, logbook
+    )  # cant seem to pass as a kwargs
+    experiment.extract_features_for_caching_dataset()
+
+
 def clear(config: DictConfig) -> None:
     """Clear an experiment and delete all its data/metadata/logs
     given a config

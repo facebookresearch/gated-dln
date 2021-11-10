@@ -333,6 +333,26 @@ class Model(BaseModel):
         )
         return loss.detach(), loss_to_backprop, num_correct
 
+    def extract_features_for_caching_dataset(
+        self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        batch_size = x.shape[0]
+        transformed_x = (
+            self.get_output_from_pretrained_model(
+                torch.cat(
+                    [transform(x) for transform in self.tasks.input_transforms], dim=0
+                )
+            )
+            .view(len(self.tasks.input_transforms), batch_size, -1)
+            .permute(1, 0, 2)
+        )
+        transformed_y = [
+            transform(y).unsqueeze(1).unsqueeze(2)
+            for transform in self.tasks.target_transforms
+        ]
+        transformed_y = torch.cat(transformed_y, dim=1)
+        return transformed_x, transformed_y
+
     def extract_features(
         self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
     ) -> tuple[list[torch.Tensor], torch.Tensor]:

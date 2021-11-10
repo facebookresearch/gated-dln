@@ -19,6 +19,7 @@ from src.experiment.ds import ExperimentMetadata, ExperimentMode, TrainState
 from src.model.base import Model as BaseModel
 from src.utils.config import instantiate_using_config
 from src.utils.types import OptimizerType
+from src.utils.utils import make_dir
 
 
 class Experiment(base_experiment.Experiment):
@@ -272,6 +273,42 @@ class Experiment(base_experiment.Experiment):
         metric_dict.pop("batch_index")
         metric_dict["time_taken"] = time() - epoch_start_time
         self.logbook.write_metric(metric=metric_dict)
+
+    def extract_features_for_caching_dataset(self) -> None:
+        path = f"/private/home/sodhani/projects/abstraction_by_gating/data/processed/{self.cfg.setup.id}"
+        make_dir(path)
+        self.model.eval()
+        for mode in ["train", "test"]:
+            testloader = cast(
+                DataLoader,
+                self.dataloaders[mode],
+            )
+            features = []
+            labels = []
+
+            with torch.inference_mode():
+                for batch_idx, batch in enumerate(testloader):  # noqa: B007
+                    input: torch.Tensor
+                    target: torch.Tensor
+                    input, target = batch
+                    input = input[target < self.num_classes_in_selected_dataset]
+                    target = target[target < self.num_classes_in_selected_dataset]
+                    batch = (input, target)
+                    if len(input) > 0:
+                        (
+                            feat,
+                            label,
+                        ) = self.extract_features_from_one_batch_for_caching_dataset(
+                            batch=batch, mode=mode, batch_idx=batch_idx
+                        )
+                        features.append(feat)
+                        labels.append(label)
+
+            features = torch.cat(features, dim=0)
+            breakpoint()
+            torch.save(features, f"{path}/{mode}_features.pt")
+            labels = torch.cat(labels, dim=0)
+            torch.save(labels, f"{path}/{mode}_labels.pt")
 
     def compute_metrics_for_batch_without_share_hidden(
         self,
