@@ -102,7 +102,10 @@ class Experiment(base_experiment.Experiment):
 
         if self.cfg.dataloader.name == "mnist":
             num_classes = 10
-        elif self.cfg.dataloader.name == "cifar10":
+        elif self.cfg.dataloader.name in [
+            "cifar10",
+            "cifar_dataset_6_classes_input_permuted_output_permuted_v1",
+        ]:
             num_classes = 10
         else:
             raise ValueError(
@@ -215,11 +218,30 @@ class Experiment(base_experiment.Experiment):
         current_metric.pop("time_taken")
         return current_metric
 
+    def extract_features_from_one_batch_for_caching_dataset(
+        self,
+        batch: tuple[torch.Tensor, torch.Tensor],
+        mode: str,
+        batch_idx: int,
+    ) -> LogType:
+        start_time = time()
+        inputs, targets = [_tensor.to(self.device) for _tensor in batch]
+        metadata = self.metadata[mode]
+        features, targets = self.model.extract_features_for_caching_dataset(
+            x=inputs, y=targets, metadata=metadata
+        )
+        return features, targets
+
     def _get_input_shape(self) -> tuple[int, ...]:
         if self.cfg.dataloader.name == "mnist":
             return (1, 28, 28)
         elif self.cfg.dataloader.name == "cifar10":
             return (3, 32, 32)
+        elif (
+            self.cfg.dataloader.name
+            == "cifar_dataset_6_classes_input_permuted_output_permuted_v1"
+        ):
+            return (512,)
         else:
             raise ValueError(
                 f"dataloader_name={self.cfg.dataloader.name} is not supported."
