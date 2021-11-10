@@ -39,7 +39,7 @@ def save_random_state(save_dir: str, step: int, logbook: LogBook) -> None:
     random_state = {
         "np": np.random.get_state(),
         "python": random.getstate(),
-        "pytorch": torch.get_rng_state(),  
+        "pytorch": torch.get_rng_state(),
     }
     path_to_save_at = f"{save_dir}/random_state.pt"
     torch.save(random_state, path_to_save_at)
@@ -296,7 +296,6 @@ def load_gate(save_dir: str, logbook: LogBook) -> torch.Tensor:
     Returns:
         Optional[Dict[Any, Any]]: metadata.
     """
-    breakpoint()
     gate_path = f"{save_dir}/gate.pt"
     if not os.path.exists(gate_path):
         logbook.write_message(f"{gate_path} does not exist.")

@@ -350,9 +350,8 @@ class Experiment(base_experiment.Experiment):
                         labels.append(label)
 
             features = torch.cat(features, dim=0)
-            breakpoint()
             torch.save(features, f"{path}/{mode}_features.pt")
-            labels = torch.cat(labels, dim=0)
+            labels = torch.cat(labels, dim=0).squeeze(2)
             torch.save(labels, f"{path}/{mode}_labels.pt")
 
     def compute_metrics_for_batch_without_share_hidden(

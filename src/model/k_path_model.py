@@ -57,7 +57,7 @@ class BaseModel(BaseModelCls):
         if in_features == -1:
             in_features = self.tasks.in_features
 
-        self.should_use_pretrained_features = True
+        self.should_use_preprocessed_dataset = True
 
         hidden_size = hidden_layer_cfg["dim"]
 
@@ -68,7 +68,7 @@ class BaseModel(BaseModelCls):
                     num_layers=num_layers,
                     hidden_size=hidden_size,
                     should_use_non_linearity=should_use_non_linearity,
-                    should_use_pretrained_features=self.should_use_pretrained_features,
+                    should_use_pretrained_features=self.should_use_preprocessed_dataset,
                 )
                 for _ in range(self.tasks.shape[0])
             ]
@@ -250,6 +250,11 @@ class Model(BaseModel):
 
         assert hidden_layer_cfg["should_share"] is True
 
+        if self.should_use_preprocessed_dataset:
+            self.forward = self.forward_when_using_preprocessed_dataset
+        else:
+            self.forward = self.forward_when_using_unprocessed_dataset
+
     def get_decoder_output_using_moe(
         self, hidden: torch.Tensor, batch_size: int
     ) -> torch.Tensor:
@@ -280,7 +285,7 @@ class Model(BaseModel):
         output_tensor = torch.cat(outputs, dim=2).view(-1, self.tasks.out_features)
         return output_tensor
 
-    def forward(
+    def forward_when_using_unprocessed_dataset(
         self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         batch_size = x.shape[0]
@@ -342,6 +347,40 @@ class Model(BaseModel):
         )
         return loss.detach(), loss_to_backprop, num_correct
 
+    def forward_when_using_preprocessed_dataset(
+        self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        batch_size = x.shape[0]
+        features = [encoder(x).unsqueeze(1) for encoder, x in zip(self.encoders, x)]
+
+        hidden = self.hidden_layer(
+            torch.cat(features, dim=1).view(
+                batch_size * self.tasks.shape[0], features[0].shape[2]
+            )
+        )
+        # (batch_size * self.tasks.shape[0], dim)
+        output_tensor = self.get_decoder_output(hidden=hidden, batch_size=batch_size)  # type: ignore[operator]
+        # error: "Tensor" not callable  [operator]
+        # (batch, self.tasks.shape[0], self.tasks.shape[1], 2)
+        target_tensor = y.view(-1)
+
+        loss = self.loss_fn(input=output_tensor, target=target_tensor)
+
+        loss = loss.view(batch_size, self.tasks.shape[0], self.tasks.shape[1]).mean(
+            dim=0
+        )
+
+        gated_loss = loss * self.gate
+
+        loss_to_backprop = gated_loss.sum() / self.gate.sum()
+        num_correct = (
+            output_tensor.max(dim=1)[1]
+            .eq(target_tensor)
+            .view(batch_size, self.tasks.shape[0], self.tasks.shape[1])
+            .sum(dim=0)
+        )
+        return loss.detach(), loss_to_backprop, num_correct
+
     def extract_features_for_caching_dataset(
         self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -356,10 +395,10 @@ class Model(BaseModel):
             .permute(1, 0, 2)
         )
         transformed_y = [
-            transform(y).unsqueeze(1).unsqueeze(2)
+            transform(y).unsqueeze(1).repeat(1, self.tasks.shape[0]).unsqueeze(2)
             for transform in self.tasks.target_transforms
         ]
-        transformed_y = torch.cat(transformed_y, dim=1)
+        transformed_y = torch.cat(transformed_y, dim=2)
         return transformed_x, transformed_y
 
     def extract_features(

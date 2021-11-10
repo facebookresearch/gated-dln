@@ -41,6 +41,8 @@ class Experiment(checkpointable_experiment.Experiment):
             experiment_id (str, optional): Defaults to "0".
         """
         super().__init__(cfg=cfg, logbook=logbook, experiment_id=experiment_id)
+        self.use_preprocessed_dataset = True
+        # update based on what we actually want to do
         if cfg.dataloader._target_.endswith("build_task_specific_dataloaders"):
             self.should_use_task_specific_dataloaders = True
         else:
