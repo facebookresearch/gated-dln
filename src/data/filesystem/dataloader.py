@@ -43,11 +43,19 @@ def _build_datasets(
 ) -> dict[str, torch.utils.data.Dataset]:
     return {
         "train": torch.utils.data.TensorDataset(
-            torch.load(f"{train_config['dataset']['dir']}/{name}/train_features.pt").to("cpu"),
-            torch.load(f"{train_config['dataset']['dir']}/{name}/train_labels.pt").to("cpu")
+            torch.load(f"{train_config['dataset']['dir']}/{name}/train_features.pt").to(
+                "cpu"
+            ),
+            torch.load(f"{train_config['dataset']['dir']}/{name}/train_labels.pt").to(
+                "cpu"
+            ),
         ),
         "test": torch.utils.data.TensorDataset(
-            torch.load(f"{test_config['dataset']['dir']}/{name}/test_features.pt").to("cpu"),
-            torch.load(f"{test_config['dataset']['dir']}/{name}/test_labels.pt").to("cpu")
+            torch.load(f"{test_config['dataset']['dir']}/{name}/test_features.pt").to(
+                "cpu"
+            ),
+            torch.load(f"{test_config['dataset']['dir']}/{name}/test_labels.pt").to(
+                "cpu"
+            ),
         ),
     }

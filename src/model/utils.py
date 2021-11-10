@@ -32,12 +32,21 @@ def get_weight_init_fn(gain: float, bias: float = 0.01):
 
 
 def get_encoder(
-    num_layers: int, in_features: int, hidden_size: int, should_use_non_linearity: bool
+    num_layers: int,
+    in_features: int,
+    hidden_size: int,
+    should_use_non_linearity: bool,
+    should_use_pretrained_features: bool,
 ):
-    layers = [
-        nn.Flatten(),
-        nn.Linear(in_features=in_features, out_features=hidden_size),
-    ]
+    layers: list[nn.Module]
+    if should_use_pretrained_features:
+        layers = []
+    else:
+        layers = [
+            nn.Flatten(),
+        ]
+
+    layers.append(nn.Linear(in_features=in_features, out_features=hidden_size))
     for _ in range(num_layers - 1):
         if should_use_non_linearity:
             layers.append(nn.ReLU())

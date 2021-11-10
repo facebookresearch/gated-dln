@@ -62,6 +62,7 @@ class Experiment(base_experiment.Experiment):
                     target_transform=None,
                 )
                 # Attribute "dataloaders" already defined on line 53  [no-redef]
+
             self.tasks = hydra.utils.instantiate(self.cfg.experiment.task)
 
             self.num_classes_in_selected_dataset = (
@@ -247,7 +248,7 @@ class Experiment(base_experiment.Experiment):
                 f"dataloader_name={self.cfg.dataloader.name} is not supported."
             )
 
-    def train_using_one_dataloader(self) -> None:
+    def train_using_one_dataloader_when_using_unprocessed_dataset(self) -> None:
         epoch_start_time = time()
         self.model.train()
         mode = "train"
@@ -281,6 +282,28 @@ class Experiment(base_experiment.Experiment):
             batch = [buffer[key][:batch_size] for key in buffer]
             for key in buffer:
                 buffer[key] = buffer[key][batch_size:]
+            current_metric = self.compute_metrics_for_batch(
+                batch=batch,
+                mode=mode,
+                batch_idx=self.train_state.batch,
+            )
+            metric_dict.update(metrics_dict=current_metric)
+            self.train_state.step += 1
+        metric_dict = metric_dict.to_dict()
+        for key in metric_dict:
+            if isinstance(metric_dict[key], (torch.Tensor)):
+                metric_dict[key] = metric_dict[key].cpu().numpy()
+        metric_dict.pop("batch_index")
+        metric_dict["time_taken"] = time() - epoch_start_time
+        self.logbook.write_metric(metric=metric_dict)
+
+    def train_using_one_dataloader_when_using_preprocessed_dataset(self) -> None:
+        epoch_start_time = time()
+        self.model.train()
+        mode = "train"
+        metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
+        train_dataloader = cast(DataLoader, self.dataloaders[mode])
+        for batch in train_dataloader:  # noqa: B007
             current_metric = self.compute_metrics_for_batch(
                 batch=batch,
                 mode=mode,
@@ -403,8 +426,9 @@ class Experiment(base_experiment.Experiment):
                 input: torch.Tensor
                 target: torch.Tensor
                 input, target = batch
-                input = input[target < self.num_classes_in_selected_dataset]
-                target = target[target < self.num_classes_in_selected_dataset]
+                if len(target.shape) == 1:
+                    input = input[target < self.num_classes_in_selected_dataset]
+                    target = target[target < self.num_classes_in_selected_dataset]
                 batch = (input, target)
                 if len(input) > 0:
                     current_metric = self.compute_metrics_for_batch(

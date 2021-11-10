@@ -57,6 +57,8 @@ class BaseModel(BaseModelCls):
         if in_features == -1:
             in_features = self.tasks.in_features
 
+        self.should_use_pretrained_features = True
+
         hidden_size = hidden_layer_cfg["dim"]
 
         self.encoders = nn.ModuleList(
@@ -66,6 +68,7 @@ class BaseModel(BaseModelCls):
                     num_layers=num_layers,
                     hidden_size=hidden_size,
                     should_use_non_linearity=should_use_non_linearity,
+                    should_use_pretrained_features=self.should_use_pretrained_features,
                 )
                 for _ in range(self.tasks.shape[0])
             ]

@@ -49,12 +49,20 @@ class Experiment(checkpointable_experiment.Experiment):
             self.train = self.train_using_two_dataloaders
             self.test = self.test_using_two_dataloaders
         else:
-            self.train = self.train_using_one_dataloader
+            if self.use_preprocessed_dataset:
+                self.train = (
+                    self.train_using_one_dataloader_when_using_preprocessed_dataset
+                )
+            else:
+                self.train = (
+                    self.train_using_one_dataloader_when_using_unprocessed_dataset
+                )
             self.test = self.test_using_one_dataloader
         self.dataloaders: Union[
             dict[str, torch.utils.data.DataLoader],
             dict[str, tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]],
         ]
+
         if should_init:
             self.dataloaders = hydra.utils.instantiate(self.cfg.dataloader)
             self.model: BaseModel = hydra.utils.instantiate(self.cfg.model).to(
