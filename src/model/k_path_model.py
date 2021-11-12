@@ -351,7 +351,10 @@ class Model(BaseModel):
         self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         batch_size = x.shape[0]
-        features = [encoder(x).unsqueeze(1) for encoder, x in zip(self.encoders, x)]
+        features = [
+            encoder(x).unsqueeze(1)
+            for encoder, x in zip(self.encoders, x.permute(1, 0, 2))
+        ]
 
         hidden = self.hidden_layer(
             torch.cat(features, dim=1).view(

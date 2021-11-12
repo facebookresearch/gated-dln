@@ -106,6 +106,7 @@ class Experiment(base_experiment.Experiment):
         elif self.cfg.dataloader.name in [
             "cifar10",
             "cifar_dataset_6_classes_input_permuted_output_permuted_v1",
+            "cifar_dataset_6_classes_input_rotated_output_permuted_v1",
         ]:
             num_classes = 10
         else:

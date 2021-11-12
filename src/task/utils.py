@@ -21,7 +21,10 @@ def get_input_shape(dataset_name: str) -> tuple[int, ...]:
         input_shape = (3, 32, 32)
     elif dataset_name == "mnist":
         input_shape = (28, 28)
-    elif dataset_name == "cifar_dataset_6_classes_input_permuted_output_permuted_v1":
+    elif dataset_name in [
+        "cifar_dataset_6_classes_input_permuted_output_permuted_v1",
+        "cifar_dataset_6_classes_input_rotated_output_permuted_v1",
+    ]:
         input_shape = (512,)
     else:
         raise ValueError(f"dataset_name={dataset_name} is not supported.")

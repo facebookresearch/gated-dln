@@ -14,7 +14,7 @@ def build_dataloaders(
     target_transform,
 ) -> dict[str, torch.utils.data.DataLoader]:
 
-    if name not in ["cifar_dataset_6_classes_input_permuted_output_permuted_v1"]:
+    if name not in ["cifar_dataset_6_classes_input_permuted_output_permuted_v1", "cifar_dataset_6_classes_input_rotated_output_permuted_v1"]:
         raise ValueError(f"name={name} is not supported.")
 
     datasets = _build_datasets(
