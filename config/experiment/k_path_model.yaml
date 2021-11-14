@@ -19,6 +19,8 @@ task:
   num_classes_in_selected_dataset: 4
   device: ${setup.device}
   num_classes_in_full_dataset: 10 # number of classes in the full dataset
+  num_input_transformations: 10
+  num_output_transformations: ${experiment.task.num_input_transformations}
 
 # task_one:
 #   name: odd_even

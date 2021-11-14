@@ -41,6 +41,7 @@ def build_dataloaders(
     train_config,
     test_config,
     target_transform=None,
+    is_preprocessed: bool = False,
 ) -> dict[str, torch.utils.data.DataLoader]:
 
     # if transform is None:

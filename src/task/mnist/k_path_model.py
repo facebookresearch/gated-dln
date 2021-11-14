@@ -19,12 +19,15 @@ def get_tasks(
     mode: str,
     num_classes_in_selected_dataset: int,
     num_classes_in_full_dataset: int,
+    num_input_transformations: int,
+    num_output_transformations: int,
     device: torch.device,
 ):
-    num_input_transformations, num_output_transformations = get_num_transformations(
-        mode=mode,
-        num_classes_in_selected_dataset=num_classes_in_selected_dataset,
-    )
+    if num_input_transformations == -1:
+        num_input_transformations, num_output_transformations = get_num_transformations(
+            mode=mode,
+            num_classes_in_selected_dataset=num_classes_in_selected_dataset,
+        )
     if mode in ["rotate"] or mode.startswith("rotate_input"):
         input_transforms = get_list_of_rotation_transformations(
             num_transformations=num_input_transformations

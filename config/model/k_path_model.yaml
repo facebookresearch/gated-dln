@@ -26,4 +26,4 @@ pretrained_cfg:
   path_to_load_weights: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt
   should_finetune: False
   should_enable_jit: False # Do not enable as it does not work. Tracked in #
-  
+should_use_preprocessed_dataset: ${dataloader.is_preprocessed}

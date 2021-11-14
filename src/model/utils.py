@@ -138,7 +138,7 @@ def get_pretrained_model(
     path_to_load_weights: str,
     should_finetune: bool,
     should_enable_jit: bool,
-) -> tuple[Any, int]:
+) -> tuple[Any, int, bool]:
     if should_use:
         model = hydra.utils.instantiate(model_cfg)
         if should_load_weights:
@@ -146,20 +146,23 @@ def get_pretrained_model(
             model.load_state_dict(checkpoint)
 
         if should_enable_jit:
-            if (
-                model_cfg["_target_"]
-                == "src.model.third_party.resnet.resnet20_for_feature_extraction"
-            ):
-                dummy_input = torch.zeros(32, 3, 32, 32)
-            else:
-                raise ValueError(f"{model_cfg['_target_']} is not supported.")
-            output_dim = model.output_dim
-            jitted_model = torch.jit.trace(model, dummy_input)
+            raise ValueError(
+                f"should_enable_jit={should_enable_jit}. It should not be enabled."
+            )
+            # if (
+            #     model_cfg["_target_"]
+            #     == "src.model.third_party.resnet.resnet20_for_feature_extraction"
+            # ):
+            #     dummy_input = torch.zeros(32, 3, 32, 32)
+            # else:
+            #     raise ValueError(f"{model_cfg['_target_']} is not supported.")
+            # output_dim = model.output_dim
+            # jitted_model = torch.jit.trace(model, dummy_input)
         else:
             output_dim = model.output_dim
         assert should_finetune is False
         model = model.eval()
         model.requires_grad_(should_finetune)
-        return model, output_dim
+        return model, output_dim, True
     else:
-        return lambda x: x, -1
+        return lambda x: x, -1, False

@@ -15,6 +15,7 @@ def build_dataloaders(
     test_config: DictConfig,
     transform,
     target_transform,
+    is_preprocessed: bool,
 ) -> dict[str, torch.utils.data.DataLoader]:
 
     if transform:
@@ -29,4 +30,5 @@ def build_dataloaders(
         test_config=test_config,
         transform=transform,
         target_transform=target_transform,
+        is_preprocessed=is_preprocessed,
     )

@@ -17,3 +17,4 @@ test_config:
     shuffle: False
     num_workers: 6
     pin_memory: True
+is_preprocessed: True

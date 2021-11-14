@@ -15,6 +15,7 @@ def build_dataloaders(
     test_config: DictConfig,
     transform,
     target_transform,
+    is_preprocessed: bool,
 ) -> dict[str, torch.utils.data.DataLoader]:
 
     if transform is None:

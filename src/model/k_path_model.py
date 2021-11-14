@@ -31,6 +31,7 @@ class BaseModel(BaseModelCls):
         weight_init: dict,
         gate_cfg: DictConfig,
         pretrained_cfg: DictConfig,
+        should_use_preprocessed_dataset: bool,
         description: str = "k path model. We train O(k) paths and evaluate on O(k**2) paths.",
     ):
         super().__init__(name=name, model_cfg=None, description=description)  # type: ignore[arg-type]
@@ -221,6 +222,7 @@ class Model(BaseModel):
         weight_init: dict,
         gate_cfg: DictConfig,
         pretrained_cfg: DictConfig,
+        should_use_preprocessed_dataset: bool,
         description: str = "k path model. We train O(k) paths and evaluate on O(k**2) paths.",
     ):
         super().__init__(
@@ -234,6 +236,7 @@ class Model(BaseModel):
             weight_init=weight_init,
             gate_cfg=gate_cfg,
             pretrained_cfg=pretrained_cfg,
+            should_use_preprocessed_dataset=should_use_preprocessed_dataset,
             description=description,
         )
 
