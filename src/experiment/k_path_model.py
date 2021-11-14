@@ -226,12 +226,12 @@ class Experiment(base_experiment.Experiment):
         mode: str,
         batch_idx: int,
     ) -> LogType:
-        start_time = time()
         inputs, targets = [_tensor.to(self.device) for _tensor in batch]
         metadata = self.metadata[mode]
-        features, targets = self.model.extract_features_for_caching_dataset(
+        features, targets = self.model.extract_features_for_caching_dataset(  # type: ignore[operator]
             x=inputs, y=targets, metadata=metadata
         )
+        # error: "Tensor" not callable
         return features, targets
 
     def _get_input_shape(self) -> tuple[int, ...]:
@@ -350,10 +350,10 @@ class Experiment(base_experiment.Experiment):
                         features.append(feat)
                         labels.append(label)
 
-            features = torch.cat(features, dim=0)
-            torch.save(features, f"{path}/{mode}_features.pt")
-            labels = torch.cat(labels, dim=0).squeeze(2)
-            torch.save(labels, f"{path}/{mode}_labels.pt")
+            features_tensor = torch.cat(features, dim=0)
+            torch.save(features_tensor, f"{path}/{mode}_features.pt")
+            labels_tensor = torch.cat(labels, dim=0).squeeze(2)
+            torch.save(labels_tensor, f"{path}/{mode}_labels.pt")
 
     def compute_metrics_for_batch_without_share_hidden(
         self,

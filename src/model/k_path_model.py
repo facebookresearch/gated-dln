@@ -39,8 +39,11 @@ class BaseModel(BaseModelCls):
         assert encoder_cfg["should_share"] is False
 
         assert decoder_cfg["should_share"] is False
-
-        self._pretrained_model, in_features = hydra.utils.instantiate(pretrained_cfg)
+        (
+            self._pretrained_model,
+            in_features,
+            self.should_use_pretrained_model,
+        ) = hydra.utils.instantiate(pretrained_cfg)
 
         if pretrained_cfg["should_finetune"]:
             self.get_output_from_pretrained_model = (
@@ -57,7 +60,7 @@ class BaseModel(BaseModelCls):
         if in_features == -1:
             in_features = self.tasks.in_features
 
-        self.should_use_preprocessed_dataset = True
+        self.should_use_preprocessed_dataset = should_use_preprocessed_dataset
 
         hidden_size = hidden_layer_cfg["dim"]
 
@@ -134,7 +137,8 @@ class BaseModel(BaseModelCls):
 
     def train(self, mode: bool = True):
         super().train(mode=mode)
-        self._pretrained_model.eval()
+        if self.should_use_pretrained_model:
+            self._pretrained_model.eval()
         # we want the pretrained model to be in eval mode all the time.
         return self
 
@@ -251,9 +255,11 @@ class Model(BaseModel):
         assert hidden_layer_cfg["should_share"] is True
 
         if self.should_use_preprocessed_dataset:
-            self.forward = self.forward_when_using_preprocessed_dataset
+            self.forward = self.forward_when_using_preprocessed_dataset  # type: ignore[assignment]
+            # error: Cannot assign to a method
         else:
-            self.forward = self.forward_when_using_unprocessed_dataset
+            self.forward = self.forward_when_using_unprocessed_dataset  # type: ignore[assignment]
+            # error: Cannot assign to a method
 
     def get_decoder_output_using_moe(
         self, hidden: torch.Tensor, batch_size: int
@@ -298,13 +304,12 @@ class Model(BaseModel):
         # transformed_x = [transform(x) for transform in self.tasks.input_transforms]
         # [(8, dim), (8, dim), (8, dim)...10 times]
 
-        # breakpoint()
-
         # with torch.inference_mode():
         # transformed_x = self._pretrained_model(torch.cat(transformed_x, dim=0))
         #         self.get_output_from_pretrained_model(transform(x)).clone()
         #         for transform in self.tasks.input_transforms
         #     ]
+
         features = [
             encoder(x).unsqueeze(1) for encoder, x in zip(self.encoders, transformed_x)
         ]
@@ -397,12 +402,13 @@ class Model(BaseModel):
             .view(len(self.tasks.input_transforms), batch_size, -1)
             .permute(1, 0, 2)
         )
-        transformed_y = [
+        transformed_y_list = [
             transform(y).unsqueeze(1).repeat(1, self.tasks.shape[0]).unsqueeze(2)
             for transform in self.tasks.target_transforms
         ]
-        transformed_y = torch.cat(transformed_y, dim=2)
-        return transformed_x, transformed_y
+        transformed_y = torch.cat(transformed_y_list, dim=2)
+        return transformed_x, transformed_y  # type: ignore[return-value]
+        # Incompatible return value type (got "Tuple[Tensor, List[Any]]", expected "Tuple[Tensor, Tensor, Tensor]")
 
     def extract_features(
         self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata

@@ -62,7 +62,8 @@ class Model(BaseModel):
         self, num_layers: int, hidden_layer_cfg: dict, should_use_non_linearity: bool
     ) -> nn.Module:
         hidden_size = hidden_layer_cfg["dim"]
-        encoder = model_utils.get_encoder(
+        encoder = model_utils.get_encoder(  # type: ignore[call-arg]
+            # error: Missing positional argument "should_use_pretrained_features" in call to "get_encoder"
             in_features=self.tasks.in_features,
             num_layers=num_layers,
             hidden_size=hidden_size,

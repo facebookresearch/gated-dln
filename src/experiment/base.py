@@ -53,12 +53,14 @@ class Experiment(checkpointable_experiment.Experiment):
         else:
             if self.use_preprocessed_dataset:
                 self.train = (
-                    self.train_using_one_dataloader_when_using_preprocessed_dataset
+                    self.train_using_one_dataloader_when_using_preprocessed_dataset  # type: ignore[attr-defined]
+                    # error: "Experiment" has no attribute "train_using_one_dataloader_when_using_preprocessed_dataset"
                 )
             else:
                 self.train = (
-                    self.train_using_one_dataloader_when_using_unprocessed_dataset
+                    self.train_using_one_dataloader_when_using_unprocessed_dataset  # type: ignore[attr-defined]
                 )
+                # error: "Experiment" has no attribute "train_using_one_dataloader_when_using_unprocessed_dataset"
             self.test = self.test_using_one_dataloader
         self.dataloaders: Union[
             dict[str, torch.utils.data.DataLoader],

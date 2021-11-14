@@ -1,7 +1,6 @@
 """This is the main entry point for the running the experiments."""
 
 import hydra
-from notifiers import get_notifier
 from omegaconf import DictConfig
 from xplogger.logbook import LogBook
 

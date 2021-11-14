@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import math
 from typing import Any
 
 import numpy as np
 import torch
 from torchvision.transforms import functional as functional_transforms
 
-from src.task.utils import get_in_and_out_features, get_input_shape
+from src.task.utils import get_input_shape
 
 
 def get_rotation_transform(angle: float):

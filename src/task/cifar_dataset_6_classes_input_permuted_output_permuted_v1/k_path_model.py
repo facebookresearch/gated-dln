@@ -3,14 +3,6 @@ from __future__ import annotations
 import torch
 
 from src.experiment.ds import Task, TasksForKPathModel
-from src.task.transformations.input import (
-    get_list_of_permutation_transformations,
-    get_list_of_rotation_transformations,
-)
-from src.task.transformations.target import (
-    get_list_of_target_transformations_using_class_combination,
-    get_list_of_target_transformations_using_class_permutation,
-)
 from src.task.utils import get_in_and_out_features, get_num_transformations
 
 
