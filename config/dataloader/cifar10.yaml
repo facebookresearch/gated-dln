@@ -20,8 +20,4 @@ test_config:
     shuffle: False
     num_workers: 6
     pin_memory: True
-
-    # model:
-    # name: resnet20
-    # should_use_pretrained: True
-    # path_to_load: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt
+is_preprocessed: False

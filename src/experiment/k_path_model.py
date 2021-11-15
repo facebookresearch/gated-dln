@@ -101,21 +101,9 @@ class Experiment(base_experiment.Experiment):
 
     def _make_train_state(self, start_step: int) -> TrainState:
 
-        if self.cfg.dataloader.name == "mnist":
-            num_classes = 10
-        elif self.cfg.dataloader.name in [
-            "cifar10",
-            "cifar_dataset_6_classes_input_permuted_output_permuted_v1",
-            "cifar_dataset_6_classes_input_rotated_output_permuted_v1",
-        ]:
-            num_classes = 10
-        else:
-            raise ValueError(
-                f"dataloader_name={self.cfg.dataloader.name} is not supported."
-            )
-
         scaling_ratio = (
-            self.cfg.experiment.task.num_classes_in_selected_dataset / num_classes
+            self.cfg.experiment.task.num_classes_in_selected_dataset
+            / self.cfg.experiment.task.num_classes_in_full_dataset
         )
 
         if self.should_use_task_specific_dataloaders:
@@ -144,6 +132,7 @@ class Experiment(base_experiment.Experiment):
         start_time = time()
         should_train = mode == "train"
         inputs, targets = [_tensor.to(self.device) for _tensor in batch]
+        targets = targets.long()
         metadata = self.metadata[mode]
         loss, loss_to_backprop, num_correct = self.model(
             x=inputs, y=targets, metadata=metadata
@@ -324,7 +313,7 @@ class Experiment(base_experiment.Experiment):
         path = f"/private/home/sodhani/projects/abstraction_by_gating/data/processed/{self.cfg.setup.id}"
         make_dir(path)
         self.model.eval()
-        for mode in ["train", "test"]:
+        for mode in ["test", "train"]:
             testloader = cast(
                 DataLoader,
                 self.dataloaders[mode],
@@ -349,11 +338,26 @@ class Experiment(base_experiment.Experiment):
                         )
                         features.append(feat)
                         labels.append(label)
-
-            features_tensor = torch.cat(features, dim=0)
-            torch.save(features_tensor, f"{path}/{mode}_features.pt")
-            labels_tensor = torch.cat(labels, dim=0).squeeze(2)
-            torch.save(labels_tensor, f"{path}/{mode}_labels.pt")
+                    if (batch_idx + 1) % 100 == 0:
+                        features_tensor = torch.cat(features, dim=0).to("cpu")
+                        torch.save(
+                            features_tensor,
+                            f"{path}/{mode}_features_{(batch_idx+1)//100}.pt",
+                        )
+                        labels_tensor = (
+                            torch.cat(labels, dim=0)
+                            .squeeze(2)
+                            .to("cpu")
+                            .type(torch.ByteTensor)
+                        )
+                        torch.save(
+                            labels_tensor,
+                            f"{path}/{mode}_labels_{(batch_idx+1)//100}.pt",
+                        )
+                        features = []
+                        labels = []
+                        del features_tensor
+                        del labels_tensor
 
     def compute_metrics_for_batch_without_share_hidden(
         self,

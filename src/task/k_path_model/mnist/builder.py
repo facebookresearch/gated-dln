@@ -30,7 +30,7 @@ def get_tasks(
         )
     if mode in ["rotate"] or mode.startswith("rotate_input"):
         input_transforms = get_list_of_rotation_transformations(
-            num_transformations=num_input_transformations
+            num_transformations=num_input_transformations, full_angle=180,
         )
     elif mode in ["permute"] or mode.startswith("permute_input"):
         input_transforms = get_list_of_permutation_transformations(

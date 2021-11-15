@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import torch
 
+from src.data.utils import get_num_input_transformations_from_dataloader_name
 from src.experiment.ds import Task, TasksForKPathModel
-from src.task.utils import get_in_and_out_features, get_num_transformations
+from src.task.utils import get_in_and_out_features
 
 
 def get_tasks(
@@ -11,12 +12,16 @@ def get_tasks(
     mode: str,
     num_classes_in_selected_dataset: int,
     num_classes_in_full_dataset: int,
+    num_input_transformations: int,
+    num_output_transformations: int,
     device: torch.device,
 ):
-    num_input_transformations, num_output_transformations = get_num_transformations(
-        mode=mode,
-        num_classes_in_selected_dataset=num_classes_in_selected_dataset,
+    assert num_input_transformations == num_output_transformations
+    assert (
+        num_input_transformations
+        == get_num_input_transformations_from_dataloader_name(name=name)
     )
+
     input_transforms = [lambda x: x for _ in range(num_input_transformations)]
     target_transforms = [lambda x: x for _ in range(num_output_transformations)]
 

@@ -8,6 +8,7 @@ from omegaconf.dictconfig import DictConfig
 from xplogger.logbook import LogBook
 
 from src.checkpoint import utils as checkpoint_utils
+from src.data.utils import get_num_classes_from_dataloader_name
 from src.experiment.ds import ExperimentMetadata, TrainState
 from src.model.base import Model as BaseModel
 from src.utils import utils
@@ -58,6 +59,18 @@ class Experiment:
         if self.cfg.dataloader.name == "cifar10_v1":
             assert self.cfg.experiment.task_one.name == "living_or_not"
             assert self.cfg.experiment.task_two.name == "fly_or_not"
+        if (
+            self.cfg.dataloader._target_
+            == "src.data.filesystem.dataloader.build_dataloaders"
+        ):
+            assert (
+                self.cfg.experiment.task.num_classes_in_selected_dataset
+                == get_num_classes_from_dataloader_name(name=self.cfg.dataloader.name)
+            )
+        if not self.cfg.setup.id.startswith("preprocessed_"):
+            assert self.cfg.model.pretrained_cfg.should_use is False
+        if self.cfg.dataloader.name == "mnist":
+            assert self.cfg.dataloader.is_preprocessed is False
 
     def save(self, step: int) -> None:
         """Method to save the experiment"""

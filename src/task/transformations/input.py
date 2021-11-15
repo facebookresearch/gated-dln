@@ -17,7 +17,7 @@ def get_rotation_transform(angle: float):
 
 
 def get_list_of_rotation_transformations(
-    num_transformations: int, full_angle: float = 90.0
+    num_transformations: int, full_angle: float = 180.0
 ) -> list[Any]:
     transforms = []
     for input_index in range(num_transformations):
