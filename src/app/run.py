@@ -29,6 +29,7 @@ def run(config: DictConfig) -> None:
         config_id.startswith("pytest_")
         or config_id in ["sample", "sample_config"]
         or config_id.startswith("test_")
+        or config.setup.slurm.cloud != "fair"
         # or is_debug_job
     ):
         # do not write the job to mongo db.

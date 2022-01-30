@@ -310,7 +310,7 @@ class Experiment(base_experiment.Experiment):
         self.logbook.write_metric(metric=metric_dict)
 
     def extract_features_for_caching_dataset(self) -> None:
-        path = f"/private/home/sodhani/projects/abstraction_by_gating/data/processed/{self.cfg.setup.id}"
+        path = f"{self.config.setup.base_path}/data/processed/{self.cfg.setup.id}"
         make_dir(path)
         self.model.eval()
         for mode in ["test", "train"]:

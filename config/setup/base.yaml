@@ -14,7 +14,12 @@ git:
   issue_id: dummy
 date: ${date:}
 slurm_id: ${slurm_id:}
+slurm:
+  id: ${slurm_id:}
+  cloud: aws
 debug:
   should_enable: False
 viz:
   params:
+notes:
+parent_script_id:

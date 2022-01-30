@@ -19,11 +19,11 @@ prepare_for_loading_configs()
 def launch(config: DictConfig) -> None:
     try:
         config = config_utils.read_config_from_file_for_resuming(
-            config_path=f"/private/home/sodhani/projects/abstraction_by_gating/logs/{config.setup.id}/config_log.jsonl"
+            config_path=f"{config.setup.base_path}/logs/{config.setup.id}/config_log.jsonl"
         )
     except json.decoder.JSONDecodeError:
         config = config_utils.read_json_config_from_file(
-            config_path=f"/private/home/sodhani/projects/abstraction_by_gating/logs/{config.setup.id}/config_log.jsonl"
+            config_path=f"{config.setup.base_path}/logs/{config.setup.id}/config_log.jsonl"
         )
 
     config = config_utils.make_config_mutable(config)
