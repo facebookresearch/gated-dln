@@ -243,10 +243,13 @@ class Model(BaseModel):
         hidden_size = hidden_layer_cfg["dim"]
 
         self.hidden_layer = model_utils.get_hidden(
-            num_layers=num_layers,
+            num_layers=hidden_layer_cfg.get("num_layers", num_layers),
             hidden_size=hidden_size,
-            should_use_non_linearity=should_use_non_linearity,
+            should_use_non_linearity=hidden_layer_cfg.get(
+                "should_use_non_linearity", should_use_non_linearity
+            ),
         )
+
         if weight_init["should_do"]:
             init_weights = model_utils.get_weight_init_fn(
                 gain=weight_init["gain"], bias=weight_init["bias"]
