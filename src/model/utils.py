@@ -22,7 +22,14 @@ def get_weight_init_fn(gain: float, bias: float = 0.01):
             m.bias.data.fill_(bias)
         elif isinstance(
             m,
-            (nn.Flatten, nn.ReLU, nn.Sequential, nn.ModuleList, moe_layer.FeedForward),
+            (
+                nn.Flatten,
+                nn.ReLU,
+                nn.LeakyReLU,
+                nn.Sequential,
+                nn.ModuleList,
+                moe_layer.FeedForward,
+            ),
         ):
             pass
         else:
@@ -36,6 +43,7 @@ def get_encoder(
     in_features: int,
     hidden_size: int,
     should_use_non_linearity: bool,
+    non_linearity_cfg: DictConfig,
     should_use_pretrained_features: bool,
 ):
     layers: list[nn.Module]
@@ -49,7 +57,7 @@ def get_encoder(
     layers.append(nn.Linear(in_features=in_features, out_features=hidden_size))
     for _ in range(num_layers - 1):
         if should_use_non_linearity:
-            layers.append(nn.ReLU())
+            layers.append(hydra.utils.instantiate(non_linearity_cfg))
         layers.append(nn.Linear(in_features=hidden_size, out_features=hidden_size))
     return nn.Sequential(*layers)
 
@@ -60,6 +68,7 @@ def get_moe_encoder(
     in_features: int,
     hidden_size: int,
     should_use_non_linearity: bool,
+    non_linearity_cfg: DictConfig,
 ):
     layers = [
         nn.Flatten(start_dim=2, end_dim=-1),
@@ -69,31 +78,41 @@ def get_moe_encoder(
             out_features=hidden_size,
             num_layers=num_layers,
             should_use_non_linearity=should_use_non_linearity,
+            non_linearity_cfg=non_linearity_cfg,
             hidden_features=hidden_size,
         ),
     ]
     return nn.Sequential(*layers)
 
 
-def get_hidden(num_layers: int, hidden_size: int, should_use_non_linearity: bool):
+def get_hidden(
+    num_layers: int,
+    hidden_size: int,
+    should_use_non_linearity: bool,
+    non_linearity_cfg: DictConfig,
+):
     layers: list[Any] = [
         nn.Linear(in_features=hidden_size, out_features=hidden_size),
     ]
     for _ in range(num_layers - 1):
         if should_use_non_linearity:
-            layers.append(nn.ReLU())
+            layers.append(hydra.utils.instantiate(non_linearity_cfg))
         layers.append(nn.Linear(in_features=hidden_size, out_features=hidden_size))
     return nn.Sequential(*layers)
 
 
 def get_decoder(
-    num_layers: int, out_features: int, hidden_size: int, should_use_non_linearity: bool
+    num_layers: int,
+    out_features: int,
+    hidden_size: int,
+    should_use_non_linearity: bool,
+    non_linearity_cfg: DictConfig,
 ):
     layers: nn.ModuleList = []  # type: ignore[assignment]
     # Incompatible types in assignment (expression has type "List[<nothing>]", variable has type "ModuleList")
     for _ in range(num_layers - 1):
         if should_use_non_linearity:
-            layers.append(nn.ReLU())
+            layers.append(hydra.utils.instantiate(non_linearity_cfg))
         layers.append(nn.Linear(in_features=hidden_size, out_features=hidden_size))
     layers += [
         nn.Linear(in_features=hidden_size, out_features=out_features),
@@ -108,6 +127,7 @@ def get_moe_decoder(
     out_features: int,
     hidden_size: int,
     should_use_non_linearity: bool,
+    non_linearity_cfg: DictConfig,
 ):
     return moe_layer.FeedForward(
         num_experts=num_experts,
@@ -115,16 +135,21 @@ def get_moe_decoder(
         out_features=out_features,
         num_layers=num_layers,
         should_use_non_linearity=should_use_non_linearity,
+        non_linearity_cfg=non_linearity_cfg,
         hidden_features=hidden_size,
     )
 
 
-def get_container_model(model_list: list[nn.Module], should_use_non_linearity: bool):
+def get_container_model(
+    model_list: list[nn.Module],
+    should_use_non_linearity: bool,
+    non_linearity_cfg: DictConfig,
+):
     container = []
     for model in model_list:
         container.append(model)
         if should_use_non_linearity:
-            container.append(nn.ReLU())
+            container.append(hydra.utils.instantiate(non_linearity_cfg))
     if should_use_non_linearity:
         container.pop()
 

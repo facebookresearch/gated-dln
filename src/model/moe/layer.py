@@ -1,6 +1,7 @@
 # Taken from https://github.com/fairinternal/mtrl/blob/master/mtrl/agent/components/moe_layer.py
 from __future__ import annotations
 
+import hydra
 import torch
 from torch import nn
 
@@ -67,6 +68,7 @@ class FeedForward(nn.Module):
         num_layers: int,
         hidden_features: int,
         should_use_non_linearity: bool,
+        non_linearity_cfg: DictConfig,
         bias: bool = True,
     ):
         """A feedforward model of mixture of experts layers.
@@ -93,7 +95,7 @@ class FeedForward(nn.Module):
             )
             layers.append(linear)
             if should_use_non_linearity:
-                layers.append(nn.ReLU())
+                layers.append(hydra.utils.instantiate(non_linearity_cfg))
             current_in_features = hidden_features
         linear = Linear(
             num_experts=num_experts,

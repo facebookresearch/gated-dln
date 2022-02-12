@@ -28,6 +28,7 @@ class BaseModel(BaseModelCls):
         hidden_layer_cfg: dict,
         decoder_cfg: dict,
         should_use_non_linearity: bool,
+        non_linearity_cfg: DictConfig,
         weight_init: dict,
         gate_cfg: DictConfig,
         pretrained_cfg: DictConfig,
@@ -72,6 +73,7 @@ class BaseModel(BaseModelCls):
                     num_layers=num_layers,
                     hidden_size=hidden_size,
                     should_use_non_linearity=should_use_non_linearity,
+                    non_linearity_cfg=non_linearity_cfg,
                     should_use_pretrained_features=self.should_use_preprocessed_dataset,
                 )
                 for _ in range(self.tasks.shape[0])
@@ -85,6 +87,7 @@ class BaseModel(BaseModelCls):
                 num_layers=num_layers,
                 hidden_size=hidden_size,
                 should_use_non_linearity=should_use_non_linearity,
+                non_linearity_cfg=non_linearity_cfg,
             )
         else:
             self.decoders = nn.ModuleList(
@@ -94,6 +97,7 @@ class BaseModel(BaseModelCls):
                         num_layers=num_layers,
                         hidden_size=hidden_size,
                         should_use_non_linearity=should_use_non_linearity,
+                        non_linearity_cfg=non_linearity_cfg,
                     )
                     for _ in range(self.tasks.shape[1])
                 ]
@@ -219,6 +223,7 @@ class Model(BaseModel):
         hidden_layer_cfg: dict,
         decoder_cfg: dict,
         should_use_non_linearity: bool,
+        non_linearity_cfg: DictConfig,
         weight_init: dict,
         gate_cfg: DictConfig,
         pretrained_cfg: DictConfig,
@@ -233,6 +238,7 @@ class Model(BaseModel):
             hidden_layer_cfg=hidden_layer_cfg,
             decoder_cfg=decoder_cfg,
             should_use_non_linearity=should_use_non_linearity,
+            non_linearity_cfg=non_linearity_cfg,
             weight_init=weight_init,
             gate_cfg=gate_cfg,
             pretrained_cfg=pretrained_cfg,
@@ -247,6 +253,9 @@ class Model(BaseModel):
             hidden_size=hidden_size,
             should_use_non_linearity=hidden_layer_cfg.get(
                 "should_use_non_linearity", should_use_non_linearity
+            ),
+            non_linearity_cfg=hidden_layer_cfg.get(
+                "non_linearity_cfg", non_linearity_cfg
             ),
         )
 

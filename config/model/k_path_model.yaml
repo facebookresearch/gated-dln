@@ -5,12 +5,15 @@ encoder_cfg:
   should_share: False
 hidden_layer_cfg:
   should_use_non_linearity: ${model.should_use_non_linearity}
+  non_linearity_cfg: ${model.non_linearity_cfg}
   should_share: True # must be set to true
   num_layers: ${model.num_layers}
   dim: 256
 decoder_cfg:
   should_share: False # must be set to false.
 should_use_non_linearity: False
+non_linearity_cfg:
+  _target_: torch.nn.ReLU
 weight_init:
   should_do: True
   gain: 0.01
