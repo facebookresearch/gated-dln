@@ -1,3 +1,4 @@
+from __future__ import annotations
 from collections import UserList
 
 from torch.utils.data import DataLoader

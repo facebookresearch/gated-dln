@@ -8,10 +8,11 @@ from omegaconf import DictConfig
 from xplogger.logbook import LogBook
 
 from src.utils.utils import set_seed
+from src.experiment.base import Experiment
 
 
-def prepare_and_run(config: DictConfig, logbook: LogBook) -> None:
-    """Prepare an experiment and run the experiment
+def prepare(config: DictConfig, logbook: LogBook) -> Experiment:
+    """Prepare an experiment
 
     Args:
         config (DictConfig): config of the experiment
@@ -26,6 +27,17 @@ def prepare_and_run(config: DictConfig, logbook: LogBook) -> None:
     experiment = hydra.utils.instantiate(
         config.experiment.builder, config, logbook
     )  # cant seem to pass as a kwargs
+    return experiment
+
+
+def prepare_and_run(config: DictConfig, logbook: LogBook) -> None:
+    """Prepare an experiment and run the experiment
+
+    Args:
+        config (DictConfig): config of the experiment
+        logbook (LogBook):
+    """
+    experiment = prepare(config=config, logbook=logbook)
     experiment.run()
 
 

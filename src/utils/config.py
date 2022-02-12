@@ -1,6 +1,5 @@
 """Code to interface with the config."""
 from __future__ import annotations
-
 import importlib
 import json
 from copy import deepcopy

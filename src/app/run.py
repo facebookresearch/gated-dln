@@ -1,5 +1,5 @@
 """This is the main entry point for the running the experiments."""
-
+from __future__ import annotations
 import hydra
 from notifiers import get_notifier
 from omegaconf import DictConfig
