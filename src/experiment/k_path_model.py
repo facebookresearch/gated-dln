@@ -68,7 +68,6 @@ class Experiment(base_experiment.Experiment):
             self.num_classes_in_selected_dataset = (
                 self.cfg.experiment.task.num_classes_in_selected_dataset
             )
-
             self.model = instantiate_using_config(
                 self.cfg.model,
                 tasks=self.tasks,

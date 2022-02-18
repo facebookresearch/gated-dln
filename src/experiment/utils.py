@@ -7,8 +7,9 @@ import torch
 from omegaconf import DictConfig
 from xplogger.logbook import LogBook
 
-from src.utils.utils import set_seed
 from src.experiment.base import Experiment
+from src.utils import config as config_utils
+from src.utils.utils import set_seed
 
 
 def prepare(config: DictConfig, logbook: LogBook) -> Experiment:
@@ -24,6 +25,36 @@ def prepare(config: DictConfig, logbook: LogBook) -> Experiment:
         f"Starting Experiment at {time.asctime(time.localtime(time.time()))}"
     )
     logbook.write_message(f"torch version = {torch.__version__}")
+    from pdb import set_trace
+
+    if "non_linearity_cfg" not in config.model:
+        config = config_utils.make_config_mutable(config)
+        config = config_utils.unset_struct(config)
+        config.model = config_utils.make_config_mutable(config.model)
+        config.model = config_utils.unset_struct(config.model)
+        config.model.hidden_layer_cfg = config_utils.make_config_mutable(
+            config.model.hidden_layer_cfg
+        )
+        config.model.hidden_layer_cfg = config_utils.unset_struct(
+            config.model.hidden_layer_cfg
+        )
+        config.model.non_linearity_cfg = DictConfig({"_target_": "torch.nn.ReLU"})
+        config.model.hidden_layer_cfg.non_linearity_cfg = DictConfig(
+            {"_target_": "torch.nn.ReLU"}
+        )
+
+        config.model.hidden_layer_cfg = config_utils.make_config_immutable(
+            config.model.hidden_layer_cfg
+        )
+        config.model.hidden_layer_cfg = config_utils.set_struct(
+            config.model.hidden_layer_cfg
+        )
+        config.model = config_utils.make_config_immutable(config.model)
+        config.model = config_utils.set_struct(config.model)
+        config = config_utils.make_config_immutable(config)
+        config = config_utils.set_struct(config)
+
+    print(config.model)
     experiment = hydra.utils.instantiate(
         config.experiment.builder, config, logbook
     )  # cant seem to pass as a kwargs

@@ -80,6 +80,7 @@ class BaseModel(BaseModelCls):
             ]
         )
 
+        print(self.encoders)
         if USE_MOE:
             self.decoders = model_utils.get_moe_decoder(
                 num_experts=self.tasks.shape[0],
@@ -103,6 +104,7 @@ class BaseModel(BaseModelCls):
                 ]
             )
 
+        print(self.decoders)
         if weight_init["should_do"]:
             init_weights = model_utils.get_weight_init_fn(
                 gain=weight_init["gain"], bias=weight_init["bias"]
@@ -258,6 +260,8 @@ class Model(BaseModel):
                 "non_linearity_cfg", non_linearity_cfg
             ),
         )
+
+        print(self.hidden_layer)
 
         if weight_init["should_do"]:
             init_weights = model_utils.get_weight_init_fn(
