@@ -26,7 +26,7 @@ hydra:
     nodes: 1
     # name: ${setup.id}
     submitit_folder: ${setup.base_path}/logs/submitit/%j
-    partition: a100 # learnlab prioritylab, devlab
+    partition: learnlab # a100 # learnlab prioritylab, devlab
     signal_delay_s: 120
     max_num_timeout: 3
     # constraint: volta32gb
