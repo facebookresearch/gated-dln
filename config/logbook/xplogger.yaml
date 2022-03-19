@@ -8,8 +8,4 @@ mongo_config:
     port: 27017
     db: project
     collection: abstraction_by_gating
-localdb_config:
-    path: ${setup.base_path}/tinydb/job.log
-    logger_types:
-        - metadata
 should_write_batch_logs: False
