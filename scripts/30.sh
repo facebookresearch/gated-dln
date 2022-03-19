@@ -1,5 +1,5 @@
 python3 -u k_path_model.py -m \
-setup.base_path=/data/home/sodhani/projects/abstraction-by-gating \
+setup.base_path=/data/home/sodhani/projects/abstraction_by_gating \
 setup.git.issue_id=30 \
 setup.seed=1 \
 experiment.num_epochs=1000 \
