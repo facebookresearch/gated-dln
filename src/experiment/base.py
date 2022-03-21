@@ -123,7 +123,7 @@ class Experiment(checkpointable_experiment.Experiment):
 
     def run(self) -> None:
         start_epoch = self.train_state.epoch
-        for _ in range(start_epoch, start_epoch + self.cfg.experiment.num_epochs):
+        for _ in range(start_epoch, self.cfg.experiment.num_epochs):
             self.train()
             self.test()
             self.periodic_save(train_state=self.train_state)
