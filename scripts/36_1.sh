@@ -8,6 +8,7 @@ experiment.task.num_classes_in_selected_dataset=10 \
 dataloader.train_config.dataloader.batch_size=8 \
 dataloader=mnist \
 experiment=k_path_model \
+setup.slurm.cloud=fair \
 model.num_layers=1 \
 model.gate_cfg.mode=5_plus_mod_permute,10_plus_mod_permute,15_plus_mod_permute,20_plus_mod_permute,25_plus_mod_permute,30_plus_mod_permute,35_plus_mod_permute \
 model.pretrained_cfg.should_use=False \
