@@ -17,7 +17,7 @@ from xplogger.types import LogType
 
 from src.data.batch_list import BatchList
 from src.experiment import checkpointable as checkpointable_experiment
-from src.experiment.ds import ExperimentMetadata, ExperimentMode, TrainState
+from src.experiment.ds import ExperimentMetadata, TrainState
 from src.model.base import Model as BaseModel
 from src.utils import config as config_utils
 from src.utils.types import OptimizerType
@@ -43,13 +43,17 @@ class Experiment(checkpointable_experiment.Experiment):
         super().__init__(cfg=cfg, logbook=logbook, experiment_id=experiment_id)
         self.use_preprocessed_dataset = self.cfg.dataloader.is_preprocessed
         # update based on what we actually want to do
+        self.should_use_task_specific_dataloaders: bool = False
         if cfg.dataloader._target_.endswith("build_task_specific_dataloaders"):
+            raise NotImplementedError()
+            # this mode is likely fully supported but still worth checking again.
             self.should_use_task_specific_dataloaders = True
-        else:
-            self.should_use_task_specific_dataloaders = False
+
         if self.should_use_task_specific_dataloaders:
-            self.train = self.train_using_two_dataloaders
-            self.test = self.test_using_two_dataloaders
+            raise NotImplementedError()
+            # this mode is likely fully supported but still worth checking again.
+            # self.train = self.train_using_two_dataloaders
+            # self.test = self.test_using_two_dataloaders
         else:
             if self.use_preprocessed_dataset:
                 self.train = (
@@ -78,7 +82,7 @@ class Experiment(checkpointable_experiment.Experiment):
             )
             self._supported_modes: list[str] = ["train", "test"]
             self.metadata = {
-                mode: ExperimentMetadata(mode=ExperimentMode(mode))
+                mode: ExperimentMetadata.build(mode=mode)
                 for mode in self._supported_modes
             }
 
@@ -98,6 +102,18 @@ class Experiment(checkpointable_experiment.Experiment):
 
         self.should_write_batch_logs = self.cfg.logbook.should_write_batch_logs
         self.startup_logs()
+        # self.trace_model()
+
+    def trace_model(self):
+        x = (
+            torch.ones_like(self.dataloaders["train"].dataset[0][0])
+            .unsqueeze(1)
+            .repeat(8, 1, 1, 1)
+            .to(self.device)
+        )
+        y = torch.ones([8]).long().to(self.device)
+
+        self.model = torch.jit.trace(self.model, (x, y))
 
     def _make_train_state(self, start_step: int) -> TrainState:
         if self.should_use_task_specific_dataloaders:
@@ -148,28 +164,28 @@ class Experiment(checkpointable_experiment.Experiment):
         metric_dict["time_taken"] = time() - epoch_start_time
         self.logbook.write_metric(metric=metric_dict)
 
-    def train_using_two_dataloaders(self) -> None:
-        epoch_start_time = time()
-        self.model.train()
-        mode = "train"
-        metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
-        dataloader1_iter = iter(self.dataloaders[mode][0])  # type: ignore[index]
-        # Value of type "Union[DataLoader[Any], Tuple[DataLoader[Any], DataLoader[Any]]]" is not indexable  [index]
-        for batch2 in self.dataloaders[mode][1]:  # type: ignore[index]
-            # Value of type "Union[DataLoader[Any], Tuple[DataLoader[Any], DataLoader[Any]]]" is not indexable  [index]
-            batch1 = next(dataloader1_iter)
-            current_metric = self.compute_metrics_for_batch(
-                batch=[BatchList([batch1[i], batch2[i]]) for i in range(len(batch1))],  # type: ignore[arg-type]
-                mode=mode,
-                batch_idx=self.train_state.batch,
-            )
-            # error: Argument "batch" has incompatible type "List[Any]"; expected "Tuple[Tensor, Tensor]"  [arg-type]
-            self.train_state.step += 1
-            metric_dict.update(metrics_dict=current_metric)
-        metric_dict = metric_dict.to_dict()
-        metric_dict.pop("batch_index")
-        metric_dict["time_taken"] = time() - epoch_start_time
-        self.logbook.write_metric(metric=metric_dict)
+    # def train_using_two_dataloaders(self) -> None:
+    #     epoch_start_time = time()
+    #     self.model.train()
+    #     mode = "train"
+    #     metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
+    #     dataloader1_iter = iter(self.dataloaders[mode][0])  # type: ignore[index]
+    #     # Value of type "Union[DataLoader[Any], Tuple[DataLoader[Any], DataLoader[Any]]]" is not indexable  [index]
+    #     for batch2 in self.dataloaders[mode][1]:  # type: ignore[index]
+    #         # Value of type "Union[DataLoader[Any], Tuple[DataLoader[Any], DataLoader[Any]]]" is not indexable  [index]
+    #         batch1 = next(dataloader1_iter)
+    #         current_metric = self.compute_metrics_for_batch(
+    #             batch=[BatchList([batch1[i], batch2[i]]) for i in range(len(batch1))],  # type: ignore[arg-type]
+    #             mode=mode,
+    #             batch_idx=self.train_state.batch,
+    #         )
+    #         # error: Argument "batch" has incompatible type "List[Any]"; expected "Tuple[Tensor, Tensor]"  [arg-type]
+    #         self.train_state.step += 1
+    #         metric_dict.update(metrics_dict=current_metric)
+    #     metric_dict = metric_dict.to_dict()
+    #     metric_dict.pop("batch_index")
+    #     metric_dict["time_taken"] = time() - epoch_start_time
+    #     self.logbook.write_metric(metric=metric_dict)
 
     def test_using_one_dataloader(self) -> None:
         epoch_start_time = time()
@@ -188,31 +204,31 @@ class Experiment(checkpointable_experiment.Experiment):
         metric_dict["time_taken"] = time() - epoch_start_time
         self.logbook.write_metric(metric=metric_dict)
 
-    def test_using_two_dataloaders(self) -> None:
-        epoch_start_time = time()
-        self.model.eval()
-        mode = "test"
-        metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
-        testloader1_iter = iter(self.dataloaders[mode][0])  # type: ignore[index]
-        # Value of type "Union[DataLoader[Any], Tuple[DataLoader[Any], DataLoader[Any]]]" is not indexable  [index]
-        testloader2 = self.dataloaders[mode][1]  # type: ignore[index]
-        # Value of type "Union[DataLoader[Any], Tuple[DataLoader[Any], DataLoader[Any]]]" is not indexable  [index]
-        with torch.no_grad():
-            for batch_idx, batch2 in enumerate(testloader2):  # noqa: B007
-                batch1 = next(testloader1_iter)
-                current_metric = self.compute_metrics_for_batch(
-                    batch=[
-                        BatchList([batch1[i], batch2[i]]) for i in range(len(batch1))  # type: ignore[arg-type]
-                    ],
-                    mode=mode,
-                    batch_idx=batch_idx,
-                )
-                # error: Argument "batch" has incompatible type "List[Any]"; expected "Tuple[Tensor, Tensor]"  [arg-type]
-                metric_dict.update(metrics_dict=current_metric)
-        metric_dict = metric_dict.to_dict()
-        metric_dict.pop("batch_index")
-        metric_dict["time_taken"] = time() - epoch_start_time
-        self.logbook.write_metric(metric=metric_dict)
+    # def test_using_two_dataloaders(self) -> None:
+    #     epoch_start_time = time()
+    #     self.model.eval()
+    #     mode = "test"
+    #     metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
+    #     testloader1_iter = iter(self.dataloaders[mode][0])  # type: ignore[index]
+    #     # Value of type "Union[DataLoader[Any], Tuple[DataLoader[Any], DataLoader[Any]]]" is not indexable  [index]
+    #     testloader2 = self.dataloaders[mode][1]  # type: ignore[index]
+    #     # Value of type "Union[DataLoader[Any], Tuple[DataLoader[Any], DataLoader[Any]]]" is not indexable  [index]
+    #     with torch.no_grad():
+    #         for batch_idx, batch2 in enumerate(testloader2):  # noqa: B007
+    #             batch1 = next(testloader1_iter)
+    #             current_metric = self.compute_metrics_for_batch(
+    #                 batch=[
+    #                     BatchList([batch1[i], batch2[i]]) for i in range(len(batch1))  # type: ignore[arg-type]
+    #                 ],
+    #                 mode=mode,
+    #                 batch_idx=batch_idx,
+    #             )
+    #             # error: Argument "batch" has incompatible type "List[Any]"; expected "Tuple[Tensor, Tensor]"  [arg-type]
+    #             metric_dict.update(metrics_dict=current_metric)
+    #     metric_dict = metric_dict.to_dict()
+    #     metric_dict.pop("batch_index")
+    #     metric_dict["time_taken"] = time() - epoch_start_time
+    #     self.logbook.write_metric(metric=metric_dict)
 
     def compute_metrics_for_batch(
         self,

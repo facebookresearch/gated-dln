@@ -16,6 +16,7 @@ from src.model import utils as model_utils
 from src.model.base import Model as BaseModelCls
 
 USE_MOE = True
+SHOULD_TRACE_MODEL = True
 
 
 class BaseModel(BaseModelCls):
@@ -65,7 +66,6 @@ class BaseModel(BaseModelCls):
         self.should_use_preprocessed_dataset = should_use_preprocessed_dataset
 
         hidden_size = hidden_layer_cfg["dim"]
-
         self.encoders = nn.ModuleList(
             [
                 model_utils.get_encoder(
@@ -111,8 +111,19 @@ class BaseModel(BaseModelCls):
             )
             self.encoders.apply(init_weights)
             self.decoders.apply(init_weights)
-        self.encoders = torch.jit.script(self.encoders)
-        self.decoders = torch.jit.script(self.decoders)
+        _batch_size = 8
+        dummy_inputs = {
+            "encoders": torch.ones(_batch_size, 784),
+            "decoders": torch.ones(_batch_size, hidden_size),
+            "decoders": torch.ones(_batch_size, hidden_size),
+        }
+        self.encoders = nn.ModuleList(
+            [
+                torch.jit.trace(encoder, dummy_inputs["encoders"])
+                for encoder in self.encoders
+            ]
+        )
+        self.decoders = torch.jit.trace(self.decoders, (dummy_inputs["decoders"]))
 
         if USE_MOE:
             self.get_decoder_output = self.get_decoder_output_using_moe
@@ -269,7 +280,13 @@ class Model(BaseModel):
             )
             self.hidden_layer.apply(init_weights)
 
-        self.hidden_layer = torch.jit.script(self.hidden_layer)
+        _batch_size = 8
+        dummy_inputs = {
+            "hidden_layer": torch.ones(_batch_size, hidden_size),
+        }
+        self.hidden_layer = torch.jit.trace(
+            self.hidden_layer, (dummy_inputs["hidden_layer"])
+        )
 
         assert hidden_layer_cfg["should_share"] is True
 
@@ -311,7 +328,10 @@ class Model(BaseModel):
         return output_tensor
 
     def forward_when_using_unprocessed_dataset(
-        self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
+        self,
+        x: torch.Tensor,
+        y: torch.Tensor,
+        # metadata: ExperimentMetadata,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         batch_size = x.shape[0]
         transformed_x = [
@@ -332,6 +352,7 @@ class Model(BaseModel):
         features = [
             encoder(x).unsqueeze(1) for encoder, x in zip(self.encoders, transformed_x)
         ]
+
         hidden = self.hidden_layer(
             torch.cat(features, dim=1).view(
                 batch_size * self.tasks.shape[0], features[0].shape[2]
@@ -372,7 +393,10 @@ class Model(BaseModel):
         return loss.detach(), loss_to_backprop, num_correct
 
     def forward_when_using_preprocessed_dataset(
-        self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
+        self,
+        x: torch.Tensor,
+        y: torch.Tensor,
+        metadata: ExperimentMetadata,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         batch_size = x.shape[0]
         features = [
