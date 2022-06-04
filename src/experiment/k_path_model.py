@@ -81,7 +81,7 @@ class Experiment(base_experiment.Experiment):
             self._supported_modes = ["train", "test"]
 
             self.metadata = {
-                mode: ExperimentMetadata(mode=ExperimentMode(mode))
+                mode: ExperimentMetadata.build(mode=mode)
                 for mode in self._supported_modes
             }
 
@@ -449,8 +449,6 @@ class Experiment(base_experiment.Experiment):
     def init_metric_dict(self, epoch: int, mode: str) -> ml_metrics.MetricDict:
         metric_dict = ml_metrics.MetricDict(
             [
-                # ml_metrics.AverageMetric("loss_matrix"),
-                # ml_metrics.AverageMetric("accuracy_matrix"),
                 ml_metrics.AverageMetric("average_loss_for_selected_paths"),
                 ml_metrics.AverageMetric("average_loss_for_unselected_paths"),
                 ml_metrics.AverageMetric("average_accuracy_for_selected_paths"),

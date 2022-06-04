@@ -38,7 +38,7 @@ class Experiment:
 
         self.model: BaseModel
 
-        self.save_dir = utils.make_dir(os.path.join(self.cfg.setup.save_dir, "model"))
+        self.save_dir = utils.make_dir(self.cfg.experiment.save.dir)
         self.optimizer: OptimizerType
         self.train_state: TrainState
         self._supported_modes: list[str]
@@ -80,18 +80,18 @@ class Experiment:
             self.logbook.write_message("Not saving the experiment as retain_last_n = 0")
             return
 
-        save_dir_path = pathlib.Path(self.save_dir)
+        # save_dir_path = pathlib.Path(self.save_dir)
 
         self.model.save(
             name="model",
-            save_dir_path=save_dir_path,
+            save_dir_path=self.save_dir,
             step=step,
             retain_last_n=retain_last_n,
             logbook=self.logbook,
         )
 
         self.save_optimizer(
-            save_dir_path=save_dir_path,
+            save_dir_path=self.save_dir,
             step=step,
             retain_last_n=retain_last_n,
         )
@@ -195,7 +195,7 @@ class Experiment:
         """Perioridically save the experiment.
 
         This is a utility method, built on top of the `save` method.
-        It performs an extra check of wether the experiment is cfgured to
+        It performs an extra check of wether the experiment is configured to
         be saved during the current epoch.
         Args:
             step (int): current step.

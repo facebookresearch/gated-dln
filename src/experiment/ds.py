@@ -33,6 +33,10 @@ class ExperimentMode(Enum):
 class ExperimentMetadata:
     mode: ExperimentMode
 
+    @classmethod
+    def build(cls, mode: str) -> ExperimentMetadata:
+        return ExperimentMetadata(mode=ExperimentMode(mode))
+
 
 @define
 class Task:

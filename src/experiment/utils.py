@@ -25,7 +25,6 @@ def prepare(config: DictConfig, logbook: LogBook) -> Experiment:
         f"Starting Experiment at {time.asctime(time.localtime(time.time()))}"
     )
     logbook.write_message(f"torch version = {torch.__version__}")
-    from pdb import set_trace
 
     if "non_linearity_cfg" not in config.model:
         config = config_utils.make_config_mutable(config)
