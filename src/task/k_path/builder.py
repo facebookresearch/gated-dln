@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import torch
 
-from src.task.k_path_model.cifar10 import builder as cifar10_builder
-from src.task.k_path_model.cifar10_preprocessed import (
-    builder as cifar10_preprocessed_builder,
-)
-from src.task.k_path_model.mnist import builder as mnist_builder
+from src.task.k_path.cifar10 import builder as cifar10_builder
+from src.task.k_path.cifar10_preprocessed import builder as cifar10_preprocessed_builder
+from src.task.k_path.mnist import builder as mnist_builder
 
 
 def get_tasks(
