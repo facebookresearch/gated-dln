@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import Enum
 from typing import Callable
 
 import torch
+from attrs import define
 
 
+@define
 class TrainState:
-    def __init__(self, num_batches_per_epoch: int, step: int = 0) -> None:
-
-        self.num_batches_per_epoch = num_batches_per_epoch
-        self.step = step
+    num_batches_per_epoch: int
+    step: int
 
     @property
     def epoch(self):
@@ -30,34 +29,19 @@ class ExperimentMode(Enum):
     TEST = "test"
 
 
-# class MoeMaskMode(Enum):
-#     USE_Y_AS_ONE_HOT = "use_y_as_one_hot"
-#     AVERAGE = "average"
-#     UNIQUE_PATHS_WITH_CONSTRASTIVE_LOSS = "unique_paths_with_constrastive_loss"
-#     UNIQUE_PATHS_WITH_COMPETITION = "unique_paths_with_competition"
-
-
-@dataclass
+@define
 class ExperimentMetadata:
     mode: ExperimentMode
 
 
-@dataclass
+@define
 class Task:
     name: str
     transform: Callable[[torch.Tensor], torch.Tensor]
     target_transform: Callable[[torch.Tensor], torch.Tensor]
 
 
-@dataclass
-class TasksForFourPathModel:
-    task_one: Task
-    task_two: Task
-    in_features: int
-    out_features: int
-
-
-@dataclass
+@define
 class TasksForKPathModel:
     tasks: list[Task]
     in_features: int
@@ -67,7 +51,7 @@ class TasksForKPathModel:
     target_transforms: list
 
 
-@dataclass
+@define
 class ModelFeature:
     encoder_output: torch.Tensor
     hidden_output: torch.Tensor

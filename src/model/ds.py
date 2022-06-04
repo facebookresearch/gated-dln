@@ -1,9 +1,9 @@
-from dataclasses import dataclass
+from attrs import define
 
 from src.utils.types import OptimizerType, SchedulerType
 
 
-@dataclass
+@define
 class OptimizerSchedulerTuple:
     optimizer: OptimizerType
     scheduler: SchedulerType

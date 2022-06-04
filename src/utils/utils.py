@@ -44,7 +44,7 @@ def chunks(_list: List[T], n: int) -> Iterator[List[T]]:
         yield _list[index : index + n]  # noqa: E203
 
 
-def make_dir(path: str) -> str:
+def make_dir(path: str) -> pathlib.Path:
     """Make a directory, along with parent directories.
     Does not return an error if the directory already exists.
 
@@ -52,9 +52,10 @@ def make_dir(path: str) -> str:
         path (str): path to make the directory.
 
     Returns:
-        str: path of the new directory.
+        pathlib.Path: path of the new directory.
     """
-    pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+    path = pathlib.Path(path)
+    path.mkdir(parents=True, exist_ok=True)
     return path
 
 
