@@ -21,12 +21,3 @@ task:
   num_classes_in_full_dataset: 10 # number of classes in the full dataset
   num_input_transformations: 10
   num_output_transformations: ${experiment.task.num_input_transformations}
-
-# task_one:
-#   name: odd_even
-#   # name: living_or_not for cifar_v1
-#   transform: default # support values: "default", "invert"
-# task_two:
-#   name: greater_than_four
-#   # name: fly_or_not for cifar_v1
-#   transform: default # support values: "default", "invert"
