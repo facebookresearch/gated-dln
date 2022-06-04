@@ -11,7 +11,7 @@ save:
   # setting a natural number (say 5) retains the last n (say 5) models.
   # setting -1 retains all the models.
   # setting 0 retains no models.
-  dir: ${setup.save_dir}
+  dir: ${setup.save_dir}/model
 task:
   _target_: src.task.${experiment.name}.builder.get_tasks
   name: ${dataloader.name}
