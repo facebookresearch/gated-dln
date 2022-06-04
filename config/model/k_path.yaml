@@ -1,6 +1,9 @@
-name: k_path_model
+name: k_path
 _target_: src.model.${model.name}.Model
 num_layers: 1
+should_use_non_linearity: False
+non_linearity_cfg:
+  _target_: torch.nn.ReLU
 encoder_cfg:
   should_share: False
 hidden_layer_cfg:
@@ -11,9 +14,6 @@ hidden_layer_cfg:
   dim: 256
 decoder_cfg:
   should_share: False # must be set to false.
-should_use_non_linearity: False
-non_linearity_cfg:
-  _target_: torch.nn.ReLU
 weight_init:
   should_do: True
   gain: 0.01

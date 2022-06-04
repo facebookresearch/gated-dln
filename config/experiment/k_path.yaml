@@ -1,4 +1,4 @@
-name: k_path_model
+name: k_path
 builder:
   _target_: src.experiment.${experiment.name}.Experiment
   _convert_: all
