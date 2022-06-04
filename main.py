@@ -8,7 +8,7 @@ from src.app.run import run
 from src.config_builder.register import prepare_for_loading_configs
 
 config_path = "config"
-config_name = "k_path_model"
+config_name = "main"
 
 prepare_for_loading_configs()
 
