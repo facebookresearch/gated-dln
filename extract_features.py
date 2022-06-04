@@ -2,15 +2,15 @@
 
 
 import hydra
+from oc_extras.resolvers import register_new_resolvers
 from omegaconf import DictConfig, OmegaConf
 
 from src.app.extract_features import run
-from src.config_builder.register import prepare_for_loading_configs
 
 config_path = "config"
-config_name = "k_path_model"
+config_name = "main"
 
-prepare_for_loading_configs()
+register_new_resolvers()
 
 
 @hydra.main(config_path=config_path, config_name=config_name)
