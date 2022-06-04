@@ -47,9 +47,7 @@ class Experiment:
 
     def validate_cfg(self):
         if self.cfg.model.name in [
-            "four_path_model",
-            "k_path_model",
-            "k_path_model_without_share_hidden",
+            "main",
         ]:
             assert not self.cfg.model.decoder_cfg.should_share
             if self.cfg.model.name in ["k_path_model_without_share_hidden"]:

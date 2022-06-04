@@ -10,7 +10,7 @@ from omegaconf.dictconfig import DictConfig
 from xplogger.logbook import LogBook
 from xplogger.types import LogType
 
-from src.experiment import k_path_model as base_experiment
+from src.experiment import k_path as base_experiment
 from src.experiment.ds import ModelFeature
 
 
