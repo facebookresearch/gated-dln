@@ -1,19 +1,16 @@
-from __future__ import annotations
-
 from typing import Any
 
 import numpy as np
 import torch
-from torchvision.transforms import functional as functional_transforms
+from omegaconf import DictConfig
 
+from src.ds.transform import InputTransformationMode
+from src.task.transforms import ds as task_transforms
 from src.task.utils import get_input_shape
 
 
 def get_rotation_transform(angle: float):
-    def transform(x):
-        return functional_transforms.rotate(img=x, angle=angle)
-
-    return transform
+    return task_transforms.RotationTransform(angle=angle)
 
 
 def get_list_of_rotation_transformations(
@@ -23,13 +20,11 @@ def get_list_of_rotation_transformations(
     for input_index in range(num_transformations):
         angle = full_angle * input_index / (num_transformations)
         transforms.append(get_rotation_transform(angle=angle))
-    return transforms
+    return task_transforms.TransformList(transforms)
 
 
 def get_permutation_transform(
     dataset_name: str,
-    mode: str,
-    num_classes_in_selected_dataset: int,
     seed: int,
     device: torch.device,
 ):
@@ -44,14 +39,8 @@ def get_permutation_transform(
             .view(1, dim1, dim2)
         )
 
-        def transform(x):
-            batch_size = x.shape[0]
-            return x.view(batch_size, dim1 * dim2)[:, permuted_indices].view(
-                batch_size, 1, dim1, dim2
-            )
-
     elif dataset_name == "cifar10":
-        num_channels, dim1, dim2 = input_shape
+        _, dim1, dim2 = input_shape
         assert dim1 == dim2
 
         permuted_indices = (
@@ -62,29 +51,11 @@ def get_permutation_transform(
             .repeat(input_shape[0], 1, 1)
         )
 
-        def transform(x):
-            batch_size = x.shape[0]
-            return x.view(batch_size, num_channels * dim1 * dim2)[
-                :, permuted_indices
-            ].view(batch_size, num_channels, dim1, dim2)
-            # v1 = x.view(batch_size, num_channels, dim1, dim2)
-            # v1[:,0] = x.view(batch_size, num_channels, dim1 * dim2)[:,0, permuted_indices[0]]
-            # v1[:,1] = x.view(batch_size, num_channels, dim1 * dim2)[:,1, permuted_indices[1]]
-            # v1[:,2] = x.view(batch_size, num_channels, dim1 * dim2)[:,2, permuted_indices[2]]
-
-            # v1 = x.view(batch_size, num_channels, dim1 * dim2)[:, :, permuted_indices[1]]
-            # v1 = v1[
-            #     :, :, permuted_indices[0]
-            # ]
-            # v2 = x.view(batch_size, num_channels * dim1 * dim2)[:, permuted_indices]
-
-    return transform
+    return task_transforms.PermutationTransform.build(permuted_indices=permuted_indices)
 
 
 def get_list_of_permutation_transformations(
     dataset_name: str,
-    mode: str,
-    num_classes_in_selected_dataset: int,
     num_transformations: int,
     device: torch.device,
 ):
@@ -93,10 +64,34 @@ def get_list_of_permutation_transformations(
         transforms.append(
             get_permutation_transform(
                 dataset_name=dataset_name,
-                mode=mode,
-                num_classes_in_selected_dataset=num_classes_in_selected_dataset,
                 seed=input_index,
                 device=device,
             )
         )
-    return transforms
+    return task_transforms.TransformList(transforms)
+
+
+def build_list_of_paths_of_transform_blocks(
+    transformation_cfg: DictConfig,
+) -> list[task_transforms.PathOfTransformBlocks]:
+    assert transformation_cfg.block_size == 1
+    assert transformation_cfg.path_len == 1
+    if transformation_cfg.mode == InputTransformationMode.ROTATE.value:
+        transforms = get_list_of_rotation_transformations(
+            num_transformations=transformation_cfg.num_transformations,
+            full_angle=180,
+        )
+    elif transformation_cfg.mode == InputTransformationMode.PERMUTE.value:
+        transforms = get_list_of_permutation_transformations(
+            dataset_name=transformation_cfg.dataset_name,
+            num_transformations=transformation_cfg.num_transformations,
+            device=transformation_cfg.device,
+        )
+    else:
+        raise NotImplementedError(f"mode={transformation_cfg.mode} is not supported.")
+    return [
+        task_transforms.PathOfTransformBlocks(
+            [task_transforms.TransformBlock([_transform])]
+        )
+        for _transform in transforms
+    ]
