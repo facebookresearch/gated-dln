@@ -16,7 +16,11 @@ from src.checkpoint import utils as checkpoint_utils
 from src.experiment.ds import ExperimentMetadata, TasksForKPathModel
 from src.model import utils as model_utils
 from src.model.base import Model as BaseModelCls
-from src.utils.constants import SHOULD_USE_FUNCTORCH, USE_MOE
+from src.utils.constants import (
+    SHOULD_USE_FUNCTORCH,
+    SHOULD_USE_FUNCTORCH_FOR_TRANSFORMING_DATA,
+    USE_MOE,
+)
 
 
 class BaseModel(BaseModelCls):
@@ -56,6 +60,11 @@ class BaseModel(BaseModelCls):
         else:
             self.get_output_from_pretrained_model = (
                 self.get_output_from_pretrained_model_in_inference_mode
+            )
+
+        if SHOULD_USE_FUNCTORCH:
+            self.get_output_from_pretrained_model = vmap(
+                self.get_output_from_pretrained_model
             )
 
         self.tasks = tasks
@@ -397,11 +406,23 @@ class Model(BaseModel):
         x: torch.Tensor,
         y: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        batch_size = x.shape[0]
-        transformed_x = [
-            self.get_output_from_pretrained_model(transform(x)).clone()
-            for transform in self.tasks.input_transforms
-        ]
+        if SHOULD_USE_FUNCTORCH_FOR_TRANSFORMING_DATA:
+            # get_output_from_pretrained_model
+            transformed_x = self.get_output_from_pretrained_model(
+                torch.cat(
+                    [
+                        transform(x).unsqueeze(0).clone()
+                        for transform in self.tasks.input_transforms
+                    ],
+                    dim=0,
+                )
+            )
+
+        else:
+            transformed_x = [
+                self.get_output_from_pretrained_model(transform(x)).clone()
+                for transform in self.tasks.input_transforms
+            ]
 
         features: list[Feature] = [
             encoder(x).unsqueeze(1) for encoder, x in zip(self.encoders, transformed_x)
@@ -422,15 +443,28 @@ class Model(BaseModel):
         y: torch.Tensor,
         # metadata: ExperimentMetadata,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        transformed_x = [
-            self.get_output_from_pretrained_model(transform(x)).clone()
-            for transform in self.tasks.input_transforms
-        ]
+        if SHOULD_USE_FUNCTORCH_FOR_TRANSFORMING_DATA:
+            transformed_x = self.get_output_from_pretrained_model(
+                torch.cat(
+                    [
+                        transform(x).unsqueeze(0).clone()
+                        for transform in self.tasks.input_transforms
+                    ],
+                    dim=0,
+                )
+            )
+
+        else:
+            transformed_x = [
+                self.get_output_from_pretrained_model(transform(x)).clone()
+                for transform in self.tasks.input_transforms
+            ]
+            transformed_x = torch.cat([x.unsqueeze(0) for x in transformed_x], dim=0)
 
         features: Feature = vmap(encoder_fmodel)(
             encoder_params,
             encoder_buffers,
-            torch.cat([x.unsqueeze(0) for x in transformed_x], dim=0),
+            transformed_x,
         ).permute(1, 0, 2)
 
         return self.common_forward_when_using_unprocessed_dataset(
