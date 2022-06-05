@@ -6,6 +6,8 @@ import pathlib
 import hydra
 import torch
 import torch.utils.data
+from functorch import vmap
+from moe.data.feature import Feature
 from omegaconf import DictConfig
 from torch import nn
 from xplogger.logbook import LogBook
@@ -14,9 +16,7 @@ from src.checkpoint import utils as checkpoint_utils
 from src.experiment.ds import ExperimentMetadata, TasksForKPathModel
 from src.model import utils as model_utils
 from src.model.base import Model as BaseModelCls
-
-USE_MOE = True
-SHOULD_TRACE_MODEL = True
+from src.utils.constants import SHOULD_USE_FUNCTORCH, USE_MOE
 
 
 class BaseModel(BaseModelCls):
@@ -293,9 +293,19 @@ class Model(BaseModel):
         if self.should_use_preprocessed_dataset:
             self.forward = self.forward_when_using_preprocessed_dataset  # type: ignore[assignment]
             # error: Cannot assign to a method
+            self.forward_eval = self.forward_when_using_preprocessed_dataset  # type: ignore[assignment]
+            # error: Cannot assign to a method
         else:
             self.forward = self.forward_when_using_unprocessed_dataset  # type: ignore[assignment]
             # error: Cannot assign to a method
+            if SHOULD_USE_FUNCTORCH:
+                self.forward_eval = (
+                    self.forward_when_using_unprocessed_dataset_functorch
+                )
+
+            else:
+                self.forward_eval = self.forward_when_using_unprocessed_dataset  # type: ignore[assignment]
+                # error: Cannot assign to a method
 
     def get_decoder_output_using_moe(
         self, hidden: torch.Tensor, batch_size: int
@@ -327,17 +337,14 @@ class Model(BaseModel):
         output_tensor = torch.cat(outputs, dim=2).view(-1, self.tasks.out_features)
         return output_tensor
 
-    def forward_when_using_unprocessed_dataset(
+    def common_forward_when_using_unprocessed_dataset(
         self,
+        features: torch.Tensor,
         x: torch.Tensor,
         y: torch.Tensor,
         # metadata: ExperimentMetadata,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         batch_size = x.shape[0]
-        transformed_x = [
-            self.get_output_from_pretrained_model(transform(x)).clone()
-            for transform in self.tasks.input_transforms
-        ]
         # [(8, dim), (8, dim), (8, dim)...10 times]
         # with torch.inference_mode():
         # transformed_x = [transform(x) for transform in self.tasks.input_transforms]
@@ -348,15 +355,8 @@ class Model(BaseModel):
         #         self.get_output_from_pretrained_model(transform(x)).clone()
         #         for transform in self.tasks.input_transforms
         #     ]
-
-        features = [
-            encoder(x).unsqueeze(1) for encoder, x in zip(self.encoders, transformed_x)
-        ]
-
         hidden = self.hidden_layer(
-            torch.cat(features, dim=1).view(
-                batch_size * self.tasks.shape[0], features[0].shape[2]
-            )
+            features.reshape(batch_size * self.tasks.shape[0], features.shape[2])
         )
         # (batch_size * self.tasks.shape[0], dim)
 
@@ -391,6 +391,51 @@ class Model(BaseModel):
             .sum(dim=0)
         )
         return loss.detach(), loss_to_backprop, num_correct
+
+    def forward_when_using_unprocessed_dataset(
+        self,
+        x: torch.Tensor,
+        y: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        batch_size = x.shape[0]
+        transformed_x = [
+            self.get_output_from_pretrained_model(transform(x)).clone()
+            for transform in self.tasks.input_transforms
+        ]
+
+        features: list[Feature] = [
+            encoder(x).unsqueeze(1) for encoder, x in zip(self.encoders, transformed_x)
+        ]
+
+        features = torch.cat(features, dim=1)
+
+        return self.common_forward_when_using_unprocessed_dataset(
+            x=x, features=features, y=y
+        )
+
+    def forward_when_using_unprocessed_dataset_functorch(
+        self,
+        encoder_fmodel,
+        encoder_params,
+        encoder_buffers,
+        x: torch.Tensor,
+        y: torch.Tensor,
+        # metadata: ExperimentMetadata,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        transformed_x = [
+            self.get_output_from_pretrained_model(transform(x)).clone()
+            for transform in self.tasks.input_transforms
+        ]
+
+        features: Feature = vmap(encoder_fmodel)(
+            encoder_params,
+            encoder_buffers,
+            torch.cat([x.unsqueeze(0) for x in transformed_x], dim=0),
+        ).permute(1, 0, 2)
+
+        return self.common_forward_when_using_unprocessed_dataset(
+            x=x, features=features, y=y
+        )
 
     def forward_when_using_preprocessed_dataset(
         self,

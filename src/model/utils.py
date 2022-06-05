@@ -6,10 +6,11 @@ from typing import Any
 import hydra
 import torch
 import torch.utils.data
+from moe.model import layer as moe_layer
 from omegaconf.dictconfig import DictConfig
 from torch import nn
 
-from src.model.moe import layer as moe_layer
+from src.model.moe import model as moe_model
 
 
 def get_weight_init_fn(gain: float, bias: float = 0.01):
@@ -28,7 +29,7 @@ def get_weight_init_fn(gain: float, bias: float = 0.01):
                 nn.LeakyReLU,
                 nn.Sequential,
                 nn.ModuleList,
-                moe_layer.FeedForward,
+                moe_model.FeedForward,
             ),
         ):
             pass
@@ -74,7 +75,7 @@ def get_moe_encoder(
 ):
     layers = [
         nn.Flatten(start_dim=2, end_dim=-1),
-        moe_layer.FeedForward(
+        moe_model.FeedForward(
             num_experts=num_experts,
             in_features=in_features,
             out_features=hidden_size,
@@ -131,7 +132,7 @@ def get_moe_decoder(
     should_use_non_linearity: bool,
     non_linearity_cfg: DictConfig,
 ):
-    return moe_layer.FeedForward(
+    return moe_model.FeedForward(
         num_experts=num_experts,
         in_features=hidden_size,
         out_features=out_features,

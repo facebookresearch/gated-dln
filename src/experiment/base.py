@@ -9,13 +9,13 @@ from typing import Union
 import hydra
 import torch
 import torch.utils.data
+from functorch import combine_state_for_ensemble
 from omegaconf import DictConfig
 from torch.utils.data.dataloader import DataLoader
 from xplogger import metrics as ml_metrics
 from xplogger.logbook import LogBook
 from xplogger.types import LogType
 
-from src.data.batch_list import BatchList
 from src.experiment import checkpointable as checkpointable_experiment
 from src.experiment.ds import ExperimentMetadata, TrainState
 from src.model.base import Model as BaseModel
@@ -187,18 +187,21 @@ class Experiment(checkpointable_experiment.Experiment):
     #     metric_dict["time_taken"] = time() - epoch_start_time
     #     self.logbook.write_metric(metric=metric_dict)
 
+    @torch.inference_mode()
     def test_using_one_dataloader(self) -> None:
         epoch_start_time = time()
         self.model.eval()
         mode = "test"
         metric_dict = self.init_metric_dict(epoch=self.train_state.epoch, mode=mode)
         testloader = self.dataloaders[mode]
-        with torch.no_grad():
-            for batch_idx, batch in enumerate(testloader):  # noqa: B007
-                current_metric = self.compute_metrics_for_batch(
-                    batch=batch, mode=mode, batch_idx=batch_idx
-                )
-                metric_dict.update(metrics_dict=current_metric)
+
+        for batch_idx, batch in enumerate(testloader):  # noqa: B007
+            current_metric = self.compute_metrics_for_batch_for_eval(
+                batch=batch,
+                mode=mode,
+                batch_idx=batch_idx,
+            )
+            metric_dict.update(metrics_dict=current_metric)
         metric_dict = metric_dict.to_dict()
         metric_dict.pop("batch_index")
         metric_dict["time_taken"] = time() - epoch_start_time

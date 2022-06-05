@@ -7,6 +7,7 @@ from typing import OrderedDict, cast
 import hydra
 import torch
 import torch.utils.data
+from functorch import combine_state_for_ensemble
 from omegaconf.dictconfig import DictConfig
 from torch.utils.data.dataloader import DataLoader
 from torchvision import transforms
@@ -15,7 +16,7 @@ from xplogger.logbook import LogBook
 from xplogger.types import LogType
 
 from src.experiment import base as base_experiment
-from src.experiment.ds import ExperimentMetadata, ExperimentMode, TrainState
+from src.experiment.ds import ExperimentMetadata, TrainState
 from src.model.base import Model as BaseModel
 from src.utils.config import instantiate_using_config
 from src.utils.types import OptimizerType
@@ -90,8 +91,16 @@ class Experiment(base_experiment.Experiment):
                     self.compute_metrics_for_batch_when_using_shared_hidden_layer
                 )
                 # Cannot assign to a method  [assignment]
+                self.compute_metrics_for_batch_for_eval = (  # type: ignore[assignment]
+                    self.compute_metrics_for_batch_for_eval_when_using_shared_hidden_layer
+                )
+                # Cannot assign to a method  [assignment]
             else:
                 self.compute_metrics_for_batch = (  # type: ignore[assignment]
+                    self.compute_metrics_for_batch_without_share_hidden
+                )
+                # Cannot assign to a method  [assignment]
+                self.compute_metrics_for_batch_for_eval = (  # type: ignore[assignment]
                     self.compute_metrics_for_batch_without_share_hidden
                 )
                 # Cannot assign to a method  [assignment]
@@ -134,6 +143,99 @@ class Experiment(base_experiment.Experiment):
         targets = targets.long()
         # metadata = self.metadata[mode]
         loss, loss_to_backprop, num_correct = self.model(x=inputs, y=targets)
+        if should_train:
+            self.optimizer.zero_grad(set_to_none=True)
+            loss_to_backprop.backward()
+            self.optimizer.step()
+        if self.should_use_task_specific_dataloaders:
+            total = targets[0].size(0)
+        else:
+            total = targets.size(0)
+        current_metric = {
+            "batch_index": batch_idx,
+            "epoch": self.train_state.epoch,
+            "step": self.train_state.step,
+            "time_taken": time() - start_time,
+            "mode": mode,
+        }
+        # key = "matrix"
+        # current_metric[f"gating_{key}"] = (self.model.mask, 1)
+        # current_metric[f"loss_{key}"] = (loss, total)
+        # current_metric[f"accuracy_{key}"] = (num_correct / total, total)
+
+        gate = self.model.gate
+        gate_sum = gate.sum()  # type: ignore[operator]
+        # "Tensor" not callable  [operator]
+        flipped_gate = (gate == 0).float()  # type: ignore[union-attr]
+        # Item "bool" of "Union[Tensor, bool]" has no attribute "float"  [union-attr]
+        flipped_gate_sum = flipped_gate.sum()
+
+        average_accuracy_for_selected_paths = (num_correct * gate).sum() / (
+            gate_sum * total
+        )
+        current_metric["average_accuracy_for_selected_paths"] = (
+            average_accuracy_for_selected_paths,
+            total,
+        )
+
+        average_accuracy_for_unselected_paths = (num_correct * flipped_gate).sum() / (
+            flipped_gate_sum * total
+        )
+        current_metric["average_accuracy_for_unselected_paths"] = (
+            average_accuracy_for_unselected_paths,
+            total,
+        )
+
+        average_loss_for_selected_paths = (loss * gate).sum() / gate_sum
+        current_metric["average_loss_for_selected_paths"] = (
+            average_loss_for_selected_paths,
+            total,
+        )
+
+        average_loss_for_unselected_paths = (
+            loss * flipped_gate
+        ).sum() / flipped_gate_sum
+        current_metric["average_loss_for_unselected_paths"] = (
+            average_loss_for_unselected_paths,
+            total,
+        )
+
+        # current_metric["avaerage_loss_for_selected_paths"] =
+        if self.should_write_batch_logs:
+            metric_to_write = {}
+            for key, value in current_metric.items():
+                if isinstance(value, (int, float, str)):
+                    metric_to_write[key] = value
+                else:
+                    if isinstance(value[0], (torch.Tensor)):
+                        metric_to_write[key] = value[0].detach().cpu().numpy()
+                    else:
+                        metric_to_write[key] = value[0]
+            self.logbook.write_metric(metric=metric_to_write)
+        current_metric.pop("time_taken")
+        return current_metric
+
+    def compute_metrics_for_batch_for_eval_when_using_shared_hidden_layer(
+        self,
+        encoder_fmodel,
+        encoder_params,
+        encoder_buffers,
+        batch: tuple[torch.Tensor, torch.Tensor],
+        mode: str,
+        batch_idx: int,
+    ) -> LogType:
+        start_time = time()
+        should_train = mode == "train"
+        inputs, targets = [_tensor.to(self.device) for _tensor in batch]
+        targets = targets.long()
+        # metadata = self.metadata[mode]
+        (loss, loss_to_backprop, num_correct,) = self.model.forward_eval(
+            encoder_fmodel=encoder_fmodel,
+            encoder_params=encoder_params,
+            encoder_buffers=encoder_buffers,
+            x=inputs,
+            y=targets,
+        )
         if should_train:
             self.optimizer.zero_grad(set_to_none=True)
             loss_to_backprop.backward()
@@ -412,6 +514,7 @@ class Experiment(base_experiment.Experiment):
         current_metric.pop("time_taken")
         return current_metric
 
+    @torch.inference_mode()
     def test_using_one_dataloader(self) -> None:
         epoch_start_time = time()
         self.model.eval()
@@ -421,21 +524,28 @@ class Experiment(base_experiment.Experiment):
             DataLoader,
             self.dataloaders[mode],
         )
+        encoder_fmodel, encoder_params, encoder_buffers = combine_state_for_ensemble(
+            self.model.encoders
+        )
 
-        with torch.inference_mode():
-            for batch_idx, batch in enumerate(testloader):  # noqa: B007
-                input: torch.Tensor
-                target: torch.Tensor
-                input, target = batch
-                if len(target.shape) == 1:
-                    input = input[target < self.num_classes_in_selected_dataset]
-                    target = target[target < self.num_classes_in_selected_dataset]
-                batch = (input, target)
-                if len(input) > 0:
-                    current_metric = self.compute_metrics_for_batch(
-                        batch=batch, mode=mode, batch_idx=batch_idx
-                    )
-                    metric_dict.update(metrics_dict=current_metric)
+        for batch_idx, batch in enumerate(testloader):  # noqa: B007
+            input: torch.Tensor
+            target: torch.Tensor
+            input, target = batch
+            if len(target.shape) == 1:
+                input = input[target < self.num_classes_in_selected_dataset]
+                target = target[target < self.num_classes_in_selected_dataset]
+            batch = (input, target)
+            if len(input) > 0:
+                current_metric = self.compute_metrics_for_batch_for_eval(
+                    encoder_fmodel=encoder_fmodel,
+                    encoder_params=encoder_params,
+                    encoder_buffers=encoder_buffers,
+                    batch=batch,
+                    mode=mode,
+                    batch_idx=batch_idx,
+                )
+                metric_dict.update(metrics_dict=current_metric)
         metric_dict = metric_dict.to_dict()
         for key in metric_dict:
             if isinstance(metric_dict[key], (torch.Tensor)):
