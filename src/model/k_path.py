@@ -271,15 +271,23 @@ class Model(BaseModel):
         hidden_size = hidden_layer_cfg["dim"]
 
         self.hidden_layer = model_utils.get_hidden(
-            num_layers=hidden_layer_cfg.get("num_layers", num_layers),
+            num_layers=hidden_layer_cfg["num_layers"],
             hidden_size=hidden_size,
-            should_use_non_linearity=hidden_layer_cfg.get(
-                "should_use_non_linearity", should_use_non_linearity
-            ),
-            non_linearity_cfg=hidden_layer_cfg.get(
-                "non_linearity_cfg", non_linearity_cfg
-            ),
+            should_use_non_linearity=hidden_layer_cfg["should_use_non_linearity"],
+            non_linearity_cfg=hidden_layer_cfg["non_linearity_cfg"],
+            recurrence_cfg=hidden_layer_cfg["recurrence_cfg"],
         )
+
+        # self.hidden_layer = model_utils.get_hidden(
+        #     num_layers=hidden_layer_cfg.get("num_layers", num_layers),
+        #     hidden_size=hidden_size,
+        #     should_use_non_linearity=hidden_layer_cfg.get(
+        #         "should_use_non_linearity", should_use_non_linearity
+        #     ),
+        #     non_linearity_cfg=hidden_layer_cfg.get(
+        #         "non_linearity_cfg", non_linearity_cfg
+        #     ),
+        # )
 
         print(self.hidden_layer)
 

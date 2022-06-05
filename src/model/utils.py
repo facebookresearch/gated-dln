@@ -91,15 +91,60 @@ def get_hidden(
     hidden_size: int,
     should_use_non_linearity: bool,
     non_linearity_cfg: DictConfig,
+    recurrence_cfg: DictConfig,
 ):
-    layers: list[Any] = [
-        nn.Linear(in_features=hidden_size, out_features=hidden_size),
-    ]
-    for _ in range(num_layers - 1):
-        if should_use_non_linearity:
-            layers.append(hydra.utils.instantiate(non_linearity_cfg))
-        layers.append(nn.Linear(in_features=hidden_size, out_features=hidden_size))
-    return nn.Sequential(*layers)
+    def _get_one_hidden_block(
+        num_layers: int,
+        hidden_size: int,
+        should_use_non_linearity: bool,
+        non_linearity_cfg: DictConfig,
+    ):
+        layers: list[Any] = [
+            nn.Linear(in_features=hidden_size, out_features=hidden_size),
+        ]
+        for _ in range(num_layers - 1):
+            if should_use_non_linearity:
+                layers.append(hydra.utils.instantiate(non_linearity_cfg))
+            layers.append(nn.Linear(in_features=hidden_size, out_features=hidden_size))
+        return nn.Sequential(*layers)
+
+    if recurrence_cfg["should_use"]:
+        if recurrence_cfg["should_tie_weights"]:
+            one_block = _get_one_hidden_block(
+                num_layers=num_layers,
+                hidden_size=hidden_size,
+                should_use_non_linearity=should_use_non_linearity,
+                non_linearity_cfg=non_linearity_cfg,
+            )
+            blocks = [one_block for _ in range(recurrence_cfg["num_blocks"])]
+        else:
+            blocks = [
+                _get_one_hidden_block(
+                    num_layers=num_layers,
+                    hidden_size=hidden_size,
+                    should_use_non_linearity=should_use_non_linearity,
+                    non_linearity_cfg=non_linearity_cfg,
+                )
+                for _ in range(recurrence_cfg["num_blocks"])
+            ]
+        if recurrence_cfg["should_use_non_linearity"]:
+            blocks_to_use = [blocks[0]]
+            for block_idx in range(recurrence_cfg["num_blocks"] - 1):
+                blocks_to_use.append(
+                    hydra.utils.instantiate(recurrence_cfg["non_linearity_cfg"])
+                )
+                blocks_to_use.append(blocks[block_idx + 1])
+        else:
+            blocks_to_use = blocks
+
+        return nn.Sequential(*blocks_to_use)
+    else:
+        return _get_one_hidden_block(
+            num_layers=num_layers,
+            hidden_size=hidden_size,
+            should_use_non_linearity=should_use_non_linearity,
+            non_linearity_cfg=non_linearity_cfg,
+        )
 
 
 def get_decoder(

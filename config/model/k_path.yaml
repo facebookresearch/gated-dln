@@ -12,6 +12,12 @@ hidden_layer_cfg:
   should_share: True # must be set to true
   num_layers: ${model.num_layers}
   dim: 256
+  recurrence_cfg:
+    should_use: False
+    num_blocks: 1
+    should_reuse_weights: False
+    should_use_non_linearity: ${model.should_use_non_linearity}
+    non_linearity_cfg: ${model.non_linearity_cfg}
 decoder_cfg:
   should_share: False # must be set to false.
 weight_init:
