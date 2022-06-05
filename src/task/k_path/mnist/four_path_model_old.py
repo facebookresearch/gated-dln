@@ -52,7 +52,7 @@ def get_tasks(task_one_cfg: DictConfig, task_two_cfg: DictConfig):
         transform=get_transform(task_two_cfg.transform),
         target_transform=get_target_transform(task_two_cfg.name),
     )
-    in_features = 28 ** 2
+    in_features = 28**2
     out_features = 2
 
     return TasksForFourPathModel(

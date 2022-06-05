@@ -8,7 +8,6 @@ from omegaconf import DictConfig
 from xplogger.logbook import LogBook
 
 from src.experiment.base import Experiment
-from src.utils import config as config_utils
 from src.utils.utils import set_seed
 
 

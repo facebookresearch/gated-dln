@@ -9,15 +9,14 @@ from typing import Union
 import hydra
 import torch
 import torch.utils.data
-from functorch import combine_state_for_ensemble
 from omegaconf import DictConfig
 from torch.utils.data.dataloader import DataLoader
 from xplogger import metrics as ml_metrics
 from xplogger.logbook import LogBook
 from xplogger.types import LogType
 
+from src.ds.experiment import ExperimentMetadata, TrainState
 from src.experiment import checkpointable as checkpointable_experiment
-from src.experiment.ds import ExperimentMetadata, TrainState
 from src.model.base import Model as BaseModel
 from src.utils import config as config_utils
 from src.utils.types import OptimizerType

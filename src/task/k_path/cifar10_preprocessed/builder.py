@@ -3,7 +3,7 @@ from __future__ import annotations
 import torch
 
 from src.data.utils import get_num_input_transformations_from_dataloader_name
-from src.experiment.ds import Task, TasksForKPathModel
+from src.ds.task import Task, TasksForKPathModel
 from src.task.utils import get_in_and_out_features
 
 

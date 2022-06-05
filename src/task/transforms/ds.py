@@ -4,7 +4,7 @@ from collections import UserList
 from typing import Any
 
 import torch
-from attrs import asdict, define, field
+from attrs import asdict, define
 from torchvision.transforms import functional as functional_transforms
 
 

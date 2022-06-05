@@ -15,8 +15,8 @@ from xplogger import metrics as ml_metrics
 from xplogger.logbook import LogBook
 from xplogger.types import LogType
 
+from src.ds.experiment import ExperimentMetadata, TrainState
 from src.experiment import base as base_experiment
-from src.experiment.ds import ExperimentMetadata, TrainState
 from src.model.base import Model as BaseModel
 from src.utils.config import instantiate_using_config
 from src.utils.types import OptimizerType

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import torch
 
-from src.experiment.ds import Task, TasksForKPathModel
-from src.task.transformations.input import (
+from src.ds.task import Task, TasksForKPathModel
+from src.task.transforms.input import (
     get_list_of_permutation_transformations,
     get_list_of_rotation_transformations,
 )
-from src.task.transformations.target import (
+from src.task.transforms.target import (
     get_list_of_target_transformations_using_class_combination,
     get_list_of_target_transformations_using_class_permutation,
 )
@@ -36,8 +36,6 @@ def get_tasks(
     elif mode in ["permute"] or mode.startswith("permute_input"):
         input_transforms = get_list_of_permutation_transformations(
             dataset_name=name,
-            mode=mode,
-            num_classes_in_selected_dataset=num_classes_in_selected_dataset,
             num_transformations=num_input_transformations,
             device=device,
         )
@@ -58,7 +56,7 @@ def get_tasks(
     elif mode.endswith("permute_target"):
         target_transforms = get_list_of_target_transformations_using_class_permutation(
             num_transformations=num_input_transformations,
-            num_classes_in_selected_dataset=num_classes_in_selected_dataset,
+            num_selected_classes=num_classes_in_selected_dataset,
             device=device,
         )
     else:

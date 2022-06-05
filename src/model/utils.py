@@ -50,12 +50,10 @@ def get_encoder(
     layers: list[nn.Module]
     if should_use_pretrained_features:
         layers = []
-        dummy_input = torch.ones(8, in_features)
     else:
         layers = [
             nn.Flatten(),
         ]
-        dummy_input = torch.ones(8, 28, 28)
 
     layers.append(nn.Linear(in_features=in_features, out_features=hidden_size))
     for _ in range(num_layers - 1):

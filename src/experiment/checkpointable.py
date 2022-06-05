@@ -1,4 +1,3 @@
-import os
 import pathlib
 from typing import Union
 
@@ -9,7 +8,7 @@ from xplogger.logbook import LogBook
 
 from src.checkpoint import utils as checkpoint_utils
 from src.data.utils import get_num_classes_from_dataloader_name
-from src.experiment.ds import ExperimentMetadata, TrainState
+from src.ds.experiment import ExperimentMetadata, TrainState
 from src.model.base import Model as BaseModel
 from src.utils import utils
 from src.utils.types import OptimizerType

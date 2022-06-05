@@ -13,7 +13,8 @@ from torch import nn
 from xplogger.logbook import LogBook
 
 from src.checkpoint import utils as checkpoint_utils
-from src.experiment.ds import ExperimentMetadata, TasksForKPathModel
+from src.ds.experiment import ExperimentMetadata
+from src.ds.task import TasksForKPathModel
 from src.model import utils as model_utils
 from src.model.base import Model as BaseModelCls
 from src.utils.constants import (
@@ -123,7 +124,6 @@ class BaseModel(BaseModelCls):
         _batch_size = 8
         dummy_inputs = {
             "encoders": torch.ones(_batch_size, 784),
-            "decoders": torch.ones(_batch_size, hidden_size),
             "decoders": torch.ones(_batch_size, hidden_size),
         }
         self.encoders = nn.ModuleList(
