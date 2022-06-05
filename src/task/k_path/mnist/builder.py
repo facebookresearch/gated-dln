@@ -70,6 +70,8 @@ def get_tasks(
         for output_index in range(num_output_transformations):
             task = Task(
                 name=f"{mode}-{input_index}-{output_index}",
+                index_for_input_transform=input_index,
+                index_for_output_transform=output_index,
                 transform=input_transforms[input_index],
                 target_transform=target_transforms[output_index],
             )
