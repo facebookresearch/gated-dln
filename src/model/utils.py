@@ -109,7 +109,7 @@ def get_hidden(
         return nn.Sequential(*layers)
 
     if recurrence_cfg["should_use"]:
-        if recurrence_cfg["should_tie_weights"]:
+        if recurrence_cfg["should_reuse_weights"]:
             one_block = _get_one_hidden_block(
                 num_layers=num_layers,
                 hidden_size=hidden_size,
