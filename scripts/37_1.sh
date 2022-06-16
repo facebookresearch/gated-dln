@@ -21,7 +21,6 @@ model.should_use_non_linearity=False \
 model.weight_init.should_do=True \
 model.weight_init.gain=10.0,1.0,0.1,0.01,0.001,0.0001 \
 model.weight_init.bias=0 \
-model.weight_init.name=xavier_normal_ \
 optimizer=sgd \
 optimizer.lr=0.0001 \
 optimizer.momentum=0.9 \
