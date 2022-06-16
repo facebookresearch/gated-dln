@@ -5,7 +5,7 @@ builder:
 should_resume: True
 num_epochs: 1000
 save:
-  frequency: 999 # in terms of epoch updates
+  frequency: 100 # in terms of epoch updates
   # setting -1 means do not save
   retain_last_n: 1
   # setting a natural number (say 5) retains the last n (say 5) models.
