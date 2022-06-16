@@ -117,7 +117,9 @@ class BaseModel(BaseModelCls):
         print(self.decoders)
         if weight_init["should_do"]:
             init_weights = model_utils.get_weight_init_fn(
-                gain=weight_init["gain"], bias=weight_init["bias"]
+                gain=weight_init["gain"],
+                bias=weight_init["bias"],
+                name=weight_init.get("name", "xavier_uniform_"),
             )
             self.encoders.apply(init_weights)
             self.decoders.apply(init_weights)
@@ -293,7 +295,9 @@ class Model(BaseModel):
 
         if weight_init["should_do"]:
             init_weights = model_utils.get_weight_init_fn(
-                gain=weight_init["gain"], bias=weight_init["bias"]
+                gain=weight_init["gain"],
+                bias=weight_init["bias"],
+                name=weight_init.get("name", "xavier_uniform_"),
             )
             self.hidden_layer.apply(init_weights)
 

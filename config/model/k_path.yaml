@@ -24,6 +24,7 @@ weight_init:
   should_do: True
   gain: 0.01
   bias: 0.1
+  name: xavier_uniform_
 gate_cfg:
   mode: one_plus_mod
   num_classes_in_selected_dataset: ${experiment.task.num_classes_in_selected_dataset}

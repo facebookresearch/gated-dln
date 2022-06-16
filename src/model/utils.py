@@ -13,13 +13,21 @@ from torch import nn
 from src.model.moe import model as moe_model
 
 
-def get_weight_init_fn(gain: float, bias: float = 0.01):
+def get_weight_init_fn(gain: float, bias: float = 0.01, name: str = "xavier_uniform_"):
     def init_weights(m):
         if isinstance(m, (nn.Linear, moe_layer.Linear)):
-            torch.nn.init.xavier_uniform_(
-                m.weight,
-                gain=gain,
-            )
+            if name == "xavier_uniform_":
+                torch.nn.init.xavier_uniform_(
+                    m.weight,
+                    gain=gain,
+                )
+            elif name == "xavier_normal_":
+                torch.nn.init.xavier_normal_(
+                    m.weight,
+                    gain=gain,
+                )
+            else:
+                raise NotImplementedError(f"name={name} is not supported.")
             m.bias.data.fill_(bias)
         elif isinstance(
             m,
