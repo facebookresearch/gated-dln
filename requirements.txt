@@ -4,18 +4,18 @@ flake8-bugbear==22.4.25
 flake8-comprehensions==3.10.0
 flake8-docstrings==1.6.0
 flake8==4.0.1
-functorch
+functorch==0.1.1
 hiplot==0.1.33
 hydra-core==1.2.0
 hydra-submitit-launcher==1.2.0
 isort==5.10.1
 jupyter==1.0.0
 jupyterlab==3.4.2
-ml-moe==0.1
+# ml-moe==0.1
 mypy==0.960
 pur==7.0.0
 pytest==7.1.2
 pytest-xdist==2.5.0
-oc-extras==0.1
+oc-extras==0.2
 typing-extensions==4.2.0
 yamllint==1.26.3
