@@ -13,7 +13,7 @@ config_name = "main"
 register_new_resolvers()
 
 
-@hydra.main(config_path=config_path, config_name=config_name)
+@hydra.main(config_path=config_path, config_name=config_name, version_base=None)
 def launch(config: DictConfig) -> None:
     print(OmegaConf.to_yaml(config, resolve=True))
     return run(config)
