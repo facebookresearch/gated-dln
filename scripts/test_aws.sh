@@ -1,5 +1,7 @@
 PYTORCH_JIT=0 python3 -u main.py \
 setup.seed=1 \
+setup.base_path=/fsx-labs/sodhani/projects/abstraction_by_gating \
+setup.slurm.cloud=aws \
 dataloader=mnist \
 dataloader.train_config.dataloader.batch_size=8 \
 experiment=k_path \
