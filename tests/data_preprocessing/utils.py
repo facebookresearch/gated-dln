@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from typing import Dict
 
-OverridesType = dict[str, str]
+OverridesType = Dict[str, str]
 
 
 def get_command(overrides: OverridesType) -> list[str]:
@@ -13,7 +14,7 @@ def get_command(overrides: OverridesType) -> list[str]:
         "setup.id": get_id_from_overrides(overrides),
     }
     parameters.update(overrides)
-    cmd = [sys.executable, "k_path_model_extract_features.py"]
+    cmd = [sys.executable, "extract_features.py"]
     for key, value in parameters.items():
         if "$" in str(key) or "$" in str(value):
             cmd.append(f"{key}={value}")

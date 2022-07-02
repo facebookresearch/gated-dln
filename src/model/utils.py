@@ -228,15 +228,6 @@ def get_pretrained_model(
             raise ValueError(
                 f"should_enable_jit={should_enable_jit}. It should not be enabled."
             )
-            # if (
-            #     model_cfg["_target_"]
-            #     == "src.model.third_party.resnet.resnet20_for_feature_extraction"
-            # ):
-            #     dummy_input = torch.zeros(32, 3, 32, 32)
-            # else:
-            #     raise ValueError(f"{model_cfg['_target_']} is not supported.")
-            # output_dim = model.output_dim
-            # jitted_model = torch.jit.trace(model, dummy_input)
         else:
             output_dim = model.output_dim
         assert should_finetune is False

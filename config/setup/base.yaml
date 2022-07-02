@@ -1,6 +1,6 @@
 seed: 42
 name: base
-base_path: /private/home/sodhani/projects/abstraction_by_gating
+base_path: /private/home/sodhani/projects/preview-dln
 save_dir: ${setup.base_path}/logs/${setup.id}
 device: cuda:0
 id: ${generate_id:${setup.description},${setup.git.issue_id},${setup.seed}}

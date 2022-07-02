@@ -16,7 +16,7 @@ def get_overrides_to_test_mnist():
             100,
         ],
         "dataloader": ["mnist"],
-        "experiment": ["k_path_model"],
+        "experiment": ["k_path"],
         "model.gate_cfg.mode": ["8_plus_mod", "8_plus_mod_permute"],
         "model.num_layers": [1, 2],
         "model.pretrained_cfg.should_use": [False],
@@ -34,7 +34,6 @@ def get_overrides_to_test_mnist():
         "model.weight_init.bias": [0.0],
         "optimizer": ["sgd", "adam"],
         "optimizer.lr": [0.0001],
-        # "optimizer.momentum": [0.9],
     }
 
     return get_overrides_to_test(params_to_test=params_to_test)
@@ -58,7 +57,7 @@ def get_overrides_to_test_cifar10():
             100,
         ],
         "dataloader": ["filesystem"],
-        "experiment": ["k_path_model"],
+        "experiment": ["k_path"],
         "experiment.task.mode": ["rotate_input_permute_target"],
         "model.gate_cfg.mode": ["8_plus_mod", "8_plus_mod_permute"],
         "model.num_layers": [1],
@@ -73,7 +72,6 @@ def get_overrides_to_test_cifar10():
         "model.weight_init.bias": [0.0],
         "optimizer": ["sgd", "adam"],
         "optimizer.lr": [0.0001],
-        # "optimizer.momentum": [0.9],
     }
 
     return get_overrides_to_test(params_to_test=params_to_test)

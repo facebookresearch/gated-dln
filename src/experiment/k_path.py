@@ -36,7 +36,7 @@ class Experiment(base_experiment.Experiment):
         """Experiment Class
 
         Args:
-            config (DictConfig):
+            cfg (DictConfig):
             logbook (LogBook):
             experiment_id (str, optional): Defaults to "0".
         """
@@ -409,7 +409,7 @@ class Experiment(base_experiment.Experiment):
         self.logbook.write_metric(metric=metric_dict)
 
     def extract_features_for_caching_dataset(self) -> None:
-        path = f"{self.config.setup.base_path}/data/processed/{self.cfg.setup.id}"
+        path = f"{self.cfg.setup.base_path}/data/processed/{self.cfg.setup.id}"
         make_dir(path)
         self.model.eval()
         for mode in ["test", "train"]:

@@ -5,9 +5,9 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import Any
+from typing import Any, Dict
 
-OverridesType = dict[str, str]
+OverridesType = Dict[str, str]
 
 
 def get_command_and_id(overrides: OverridesType) -> list[str]:
@@ -24,7 +24,7 @@ def get_command_and_id(overrides: OverridesType) -> list[str]:
     setup_id = get_id_from_overrides(parameters)
     parameters["setup.id"] = setup_id
 
-    cmd = [sys.executable, "k_path_model.py"]
+    cmd = [sys.executable, "main.py"]
     for key, value in parameters.items():
         if "$" in str(key) or "$" in str(value):
             cmd.append(f"{key}={value}")

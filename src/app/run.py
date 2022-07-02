@@ -1,7 +1,7 @@
 """This is the main entry point for the running the experiments."""
 from __future__ import annotations
+
 import hydra
-from notifiers import get_notifier
 from omegaconf import DictConfig
 from xplogger.logbook import LogBook
 
@@ -35,12 +35,6 @@ def run(config: DictConfig) -> None:
         # do not write the job to mongo db.
         print(logbook_config["loggers"].pop("mongo"))
     logbook = LogBook(logbook_config)
-    if not is_debug_job:
-        zulip = get_notifier("zulip")
-        zulip.notify(
-            message=f"Starting experiment for config_id: {config_id}. Slurm id is {slurm_id}",
-            **config.notifier,
-        )
     config_to_write = config_utils.to_dict(config, resolve=True)
     config_to_write["status"] = "RUNNING"
     logbook.write_metadata(config_to_write)

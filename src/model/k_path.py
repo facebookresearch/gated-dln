@@ -17,11 +17,6 @@ from src.ds.experiment import ExperimentMetadata
 from src.ds.task import TasksForKPathModel
 from src.model import utils as model_utils
 from src.model.base import Model as BaseModelCls
-from src.utils.constants import (
-    SHOULD_USE_FUNCTORCH,
-    SHOULD_USE_FUNCTORCH_FOR_TRANSFORMING_DATA,
-    USE_MOE,
-)
 
 
 class BaseModel(BaseModelCls):
@@ -63,10 +58,9 @@ class BaseModel(BaseModelCls):
                 self.get_output_from_pretrained_model_in_inference_mode
             )
 
-        if SHOULD_USE_FUNCTORCH:
-            self.get_output_from_pretrained_model = vmap(
-                self.get_output_from_pretrained_model
-            )
+        self.get_output_from_pretrained_model = vmap(
+            self.get_output_from_pretrained_model
+        )
 
         self.tasks = tasks
 
@@ -91,29 +85,14 @@ class BaseModel(BaseModelCls):
         )
 
         print(self.encoders)
-        if USE_MOE:
-            self.decoders = model_utils.get_moe_decoder(
-                num_experts=self.tasks.shape[0],
-                out_features=self.tasks.out_features,
-                num_layers=num_layers,
-                hidden_size=hidden_size,
-                should_use_non_linearity=should_use_non_linearity,
-                non_linearity_cfg=non_linearity_cfg,
-            )
-        else:
-            self.decoders = nn.ModuleList(
-                [
-                    model_utils.get_decoder(
-                        out_features=self.tasks.out_features,
-                        num_layers=num_layers,
-                        hidden_size=hidden_size,
-                        should_use_non_linearity=should_use_non_linearity,
-                        non_linearity_cfg=non_linearity_cfg,
-                    )
-                    for _ in range(self.tasks.shape[1])
-                ]
-            )
-
+        self.decoders = model_utils.get_moe_decoder(
+            num_experts=self.tasks.shape[0],
+            out_features=self.tasks.out_features,
+            num_layers=num_layers,
+            hidden_size=hidden_size,
+            should_use_non_linearity=should_use_non_linearity,
+            non_linearity_cfg=non_linearity_cfg,
+        )
         print(self.decoders)
         if weight_init["should_do"]:
             init_weights = model_utils.get_weight_init_fn(
@@ -128,18 +107,8 @@ class BaseModel(BaseModelCls):
             "encoders": torch.ones(_batch_size, 784),
             "decoders": torch.ones(_batch_size, hidden_size),
         }
-        self.encoders = nn.ModuleList(
-            [
-                torch.jit.trace(encoder, dummy_inputs["encoders"])
-                for encoder in self.encoders
-            ]
-        )
-        self.decoders = torch.jit.trace(self.decoders, (dummy_inputs["decoders"]))
 
-        if USE_MOE:
-            self.get_decoder_output = self.get_decoder_output_using_moe
-        else:
-            self.get_decoder_output = self.get_decoder_output_using_model_list
+        self.get_decoder_output = self.get_decoder_output_using_moe
 
         self.loss_fn = nn.CrossEntropyLoss(reduction="none")
 
@@ -319,44 +288,14 @@ class Model(BaseModel):
         else:
             self.forward = self.forward_when_using_unprocessed_dataset  # type: ignore[assignment]
             # error: Cannot assign to a method
-            if SHOULD_USE_FUNCTORCH:
-                self.forward_eval = (
-                    self.forward_when_using_unprocessed_dataset_functorch
-                )
-
-            else:
-                self.forward_eval = self.forward_when_using_unprocessed_dataset  # type: ignore[assignment]
-                # error: Cannot assign to a method
+            self.forward_eval = self.forward_when_using_unprocessed_dataset_functorch
 
     def get_decoder_output_using_moe(
         self, hidden: torch.Tensor, batch_size: int
     ) -> torch.Tensor:
         outputs = self.decoders(hidden)
-        outputs = (
-            outputs.permute(1, 0, 2)
-            # .view(
-            #     batch_size,
-            #     self.tasks.shape[0],
-            #     self.tasks.shape[1],
-            #     self.tasks.out_features,
-            # )
-            .reshape(-1, self.tasks.out_features)
-        )
+        outputs = outputs.permute(1, 0, 2).reshape(-1, self.tasks.out_features)
         return outputs
-
-    def get_decoder_output_using_model_list(
-        self, hidden: torch.Tensor, batch_size: int
-    ) -> torch.Tensor:
-        outputs = [
-            decoder(hidden)
-            .reshape(batch_size, self.tasks.shape[0], self.tasks.out_features)
-            .unsqueeze(2)
-            for decoder in self.decoders
-        ]  # list of size self.tasks.shape[1]
-        # outputs[0].shape == (batch, self.tasks.shape[0], 1, 2)
-
-        output_tensor = torch.cat(outputs, dim=2).view(-1, self.tasks.out_features)
-        return output_tensor
 
     def common_forward_when_using_unprocessed_dataset(
         self,
@@ -366,16 +305,6 @@ class Model(BaseModel):
         # metadata: ExperimentMetadata,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         batch_size = x.shape[0]
-        # [(8, dim), (8, dim), (8, dim)...10 times]
-        # with torch.inference_mode():
-        # transformed_x = [transform(x) for transform in self.tasks.input_transforms]
-        # [(8, dim), (8, dim), (8, dim)...10 times]
-
-        # with torch.inference_mode():
-        # transformed_x = self._pretrained_model(torch.cat(transformed_x, dim=0))
-        #         self.get_output_from_pretrained_model(transform(x)).clone()
-        #         for transform in self.tasks.input_transforms
-        #     ]
         hidden = self.hidden_layer(
             features.reshape(batch_size * self.tasks.shape[0], features.shape[2])
         )
@@ -418,23 +347,15 @@ class Model(BaseModel):
         x: torch.Tensor,
         y: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        if SHOULD_USE_FUNCTORCH_FOR_TRANSFORMING_DATA:
-            # get_output_from_pretrained_model
-            transformed_x = self.get_output_from_pretrained_model(
-                torch.cat(
-                    [
-                        transform(x).unsqueeze(0).clone()
-                        for transform in self.tasks.input_transforms
-                    ],
-                    dim=0,
-                )
+        transformed_x = self.get_output_from_pretrained_model(
+            torch.cat(
+                [
+                    transform(x).unsqueeze(0).clone()
+                    for transform in self.tasks.input_transforms
+                ],
+                dim=0,
             )
-
-        else:
-            transformed_x = [
-                self.get_output_from_pretrained_model(transform(x)).clone()
-                for transform in self.tasks.input_transforms
-            ]
+        )
 
         features: list[Feature] = [
             encoder(x).unsqueeze(1) for encoder, x in zip(self.encoders, transformed_x)
@@ -453,25 +374,16 @@ class Model(BaseModel):
         encoder_buffers,
         x: torch.Tensor,
         y: torch.Tensor,
-        # metadata: ExperimentMetadata,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        if SHOULD_USE_FUNCTORCH_FOR_TRANSFORMING_DATA:
-            transformed_x = self.get_output_from_pretrained_model(
-                torch.cat(
-                    [
-                        transform(x).unsqueeze(0).clone()
-                        for transform in self.tasks.input_transforms
-                    ],
-                    dim=0,
-                )
+        transformed_x = self.get_output_from_pretrained_model(
+            torch.cat(
+                [
+                    transform(x).unsqueeze(0).clone()
+                    for transform in self.tasks.input_transforms
+                ],
+                dim=0,
             )
-
-        else:
-            transformed_x = [
-                self.get_output_from_pretrained_model(transform(x)).clone()
-                for transform in self.tasks.input_transforms
-            ]
-            transformed_x = torch.cat([x.unsqueeze(0) for x in transformed_x], dim=0)
+        )
 
         features: Feature = vmap(encoder_fmodel)(
             encoder_params,

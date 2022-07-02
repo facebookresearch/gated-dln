@@ -101,18 +101,6 @@ class Experiment(checkpointable_experiment.Experiment):
 
         self.should_write_batch_logs = self.cfg.logbook.should_write_batch_logs
         self.startup_logs()
-        # self.trace_model()
-
-    def trace_model(self):
-        x = (
-            torch.ones_like(self.dataloaders["train"].dataset[0][0])
-            .unsqueeze(1)
-            .repeat(8, 1, 1, 1)
-            .to(self.device)
-        )
-        y = torch.ones([8]).long().to(self.device)
-
-        self.model = torch.jit.trace(self.model, (x, y))
 
     def _make_train_state(self, start_step: int) -> TrainState:
         if self.should_use_task_specific_dataloaders:

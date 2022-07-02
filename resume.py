@@ -1,5 +1,7 @@
 """This is the main entry point for the code."""
 
+import json
+
 import hydra
 from oc_extras.resolvers import register_new_resolvers
 from omegaconf import DictConfig
@@ -11,6 +13,7 @@ config_path = "config"
 config_name = "main"
 
 register_new_resolvers()
+
 
 @hydra.main(config_path=config_path, config_name=config_name)
 def launch(config: DictConfig) -> None:

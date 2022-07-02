@@ -54,8 +54,6 @@ class Model(BaseModel):
             )
             self.models.apply(init_weights)
 
-        self.models = torch.jit.script(self.models)
-
         self.loss_fn = nn.CrossEntropyLoss(reduction="none")
 
     def _make_model(
