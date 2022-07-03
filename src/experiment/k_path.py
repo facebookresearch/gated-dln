@@ -141,7 +141,6 @@ class Experiment(base_experiment.Experiment):
         should_train = mode == "train"
         inputs, targets = [_tensor.to(self.device) for _tensor in batch]
         targets = targets.long()
-        # metadata = self.metadata[mode]
         loss, loss_to_backprop, num_correct = self.model(x=inputs, y=targets)
         if should_train:
             self.optimizer.zero_grad(set_to_none=True)
@@ -229,7 +228,7 @@ class Experiment(base_experiment.Experiment):
         inputs, targets = [_tensor.to(self.device) for _tensor in batch]
         targets = targets.long()
         # metadata = self.metadata[mode]
-        (loss, loss_to_backprop, num_correct,) = self.model.forward_eval(
+        (loss, loss_to_backprop, num_correct) = self.model.forward_eval(
             encoder_fmodel=encoder_fmodel,
             encoder_params=encoder_params,
             encoder_buffers=encoder_buffers,

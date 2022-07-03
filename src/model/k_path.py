@@ -283,7 +283,7 @@ class Model(BaseModel):
         if self.should_use_preprocessed_dataset:
             self.forward = self.forward_when_using_preprocessed_dataset  # type: ignore[assignment]
             # error: Cannot assign to a method
-            self.forward_eval = self.forward_when_using_preprocessed_dataset  # type: ignore[assignment]
+            self.forward_eval = self.forward_when_using_preprocessed_dataset_functorch  # type: ignore[assignment]
             # error: Cannot assign to a method
         else:
             self.forward = self.forward_when_using_unprocessed_dataset  # type: ignore[assignment]
@@ -302,7 +302,6 @@ class Model(BaseModel):
         features: torch.Tensor,
         x: torch.Tensor,
         y: torch.Tensor,
-        # metadata: ExperimentMetadata,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         batch_size = x.shape[0]
         hidden = self.hidden_layer(
@@ -395,22 +394,15 @@ class Model(BaseModel):
             x=x, features=features, y=y
         )
 
-    def forward_when_using_preprocessed_dataset(
+    def common_forward_when_using_preprocessed_dataset(
         self,
+        features: torch.Tensor,
         x: torch.Tensor,
         y: torch.Tensor,
-        metadata: ExperimentMetadata,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         batch_size = x.shape[0]
-        features = [
-            encoder(x).unsqueeze(1)
-            for encoder, x in zip(self.encoders, x.permute(1, 0, 2))
-        ]
-
         hidden = self.hidden_layer(
-            torch.cat(features, dim=1).view(
-                batch_size * self.tasks.shape[0], features[0].shape[2]
-            )
+            features.reshape(batch_size * self.tasks.shape[0], features.shape[2])
         )
         # (batch_size * self.tasks.shape[0], dim)
         output_tensor = self.get_decoder_output(hidden=hidden, batch_size=batch_size)  # type: ignore[operator]
@@ -434,6 +426,38 @@ class Model(BaseModel):
             .sum(dim=0)
         )
         return loss.detach(), loss_to_backprop, num_correct
+
+    def forward_when_using_preprocessed_dataset_functorch(
+        self,
+        encoder_fmodel,
+        encoder_params,
+        encoder_buffers,
+        x: torch.Tensor,
+        y: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        transformed_x = x.permute(1, 0, 2)
+        features: Feature = vmap(encoder_fmodel)(
+            encoder_params,
+            encoder_buffers,
+            transformed_x,
+        ).permute(1, 0, 2)
+        return self.common_forward_when_using_preprocessed_dataset(
+            features=features, x=x, y=y
+        )
+
+    def forward_when_using_preprocessed_dataset(
+        self,
+        x: torch.Tensor,
+        y: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        features = [
+            encoder(x).unsqueeze(1)
+            for encoder, x in zip(self.encoders, x.permute(1, 0, 2))
+        ]
+        features = torch.cat(features, dim=1)
+        return self.common_forward_when_using_preprocessed_dataset(
+            features=features, x=x, y=y
+        )
 
     def extract_features_for_caching_dataset(
         self, x: torch.Tensor, y: torch.Tensor, metadata: ExperimentMetadata
