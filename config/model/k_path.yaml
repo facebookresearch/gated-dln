@@ -1,0 +1,41 @@
+name: k_path
+_target_: src.model.${model.name}.Model
+num_layers: 1
+should_use_non_linearity: False
+non_linearity_cfg:
+  _target_: torch.nn.ReLU
+encoder_cfg:
+  should_share: False
+hidden_layer_cfg:
+  should_use_non_linearity: ${model.should_use_non_linearity}
+  non_linearity_cfg: ${model.non_linearity_cfg}
+  should_share: True # must be set to true
+  num_layers: ${model.num_layers}
+  dim: 256
+  recurrence_cfg:
+    should_use: False
+    num_blocks: 1
+    should_reuse_weights: False
+    should_use_non_linearity: ${model.should_use_non_linearity}
+    non_linearity_cfg: ${model.non_linearity_cfg}
+decoder_cfg:
+  should_share: False # must be set to false.
+weight_init:
+  should_do: True
+  gain: 0.01
+  bias: 0.1
+  name: xavier_uniform_
+gate_cfg:
+  mode: one_plus_mod
+  num_classes_in_selected_dataset: ${experiment.task.num_classes_in_selected_dataset}
+pretrained_cfg:
+  _target_: src.model.utils.get_pretrained_model
+  _recursive_: False
+  should_use: True
+  model_cfg:
+    _target_: src.model.third_party.resnet.resnet20_for_feature_extraction
+  should_load_weights: True
+  path_to_load_weights: /private/home/sodhani/projects/abstraction_by_gating/third-party/pytorch_resnet_cifar10/pretrained_models/resnet20-12fca82f.pt
+  should_finetune: False
+  should_enable_jit: False # Do not enable as it does not work. Tracked in #
+should_use_preprocessed_dataset: ${dataloader.is_preprocessed}

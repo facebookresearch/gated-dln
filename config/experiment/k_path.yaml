@@ -1,0 +1,23 @@
+name: k_path
+builder:
+  _target_: src.experiment.${experiment.name}.Experiment
+  _convert_: all
+should_resume: True
+num_epochs: 1000
+save:
+  frequency: 100 # in terms of epoch updates
+  # setting -1 means do not save
+  retain_last_n: 1
+  # setting a natural number (say 5) retains the last n (say 5) models.
+  # setting -1 retains all the models.
+  # setting 0 retains no models.
+  dir: ${setup.save_dir}/model
+task:
+  _target_: src.task.${experiment.name}.builder.get_tasks
+  name: ${dataloader.name}
+  mode: rotate
+  num_classes_in_selected_dataset: 4
+  device: ${setup.device}
+  num_classes_in_full_dataset: 10 # number of classes in the full dataset
+  num_input_transformations: 10
+  num_output_transformations: ${experiment.task.num_input_transformations}

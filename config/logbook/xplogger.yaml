@@ -1,0 +1,11 @@
+_target_: xplogger.logbook.make_config
+_convert_: all
+write_to_console: True
+logger_dir: ${setup.save_dir}
+create_multiple_log_files: True
+mongo_config:
+    host: devfair0140
+    port: 27017
+    db: project
+    collection: abstraction_by_gating
+should_write_batch_logs: False

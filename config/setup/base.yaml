@@ -1,0 +1,25 @@
+seed: 42
+name: base
+base_path: /private/home/sodhani/projects/preview-dln
+save_dir: ${setup.base_path}/logs/${setup.id}
+device: cuda:0
+id: ${generate_id:${setup.description},${setup.git.issue_id},${setup.seed}}
+description: Dummy
+script_id: dummy
+tags:
+# - sample
+git:
+  commit_id: ${git_commit_id:}
+  has_uncommitted_changes: ${git_has_uncommitted_changes:}
+  issue_id: dummy
+date: ${date:}
+slurm_id: ${slurm_id:}
+slurm:
+  id: ${slurm_id:}
+  cloud: fair
+debug:
+  should_enable: False
+viz:
+  params:
+notes:
+parent_script_id:
